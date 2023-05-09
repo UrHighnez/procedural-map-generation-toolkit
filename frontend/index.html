@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Editor</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="toolbar">
+    <button id="save-btn">Save</button>
+    <button id="load-btn">Load</button>
+    <button id="tools-btn">Tools</button>
+    <button id="generate-btn">Generate</button>
+</div>
+
+<div id="tools-panel" class="hidden">
+    <button id="toggle-grid-btn">Toggle Grid</button>
+
+    <button id="paint-water" class="paint-btn" style="background-color: #0077be;">Water</button>
+    <button id="paint-land" class="paint-btn" style="background-color: #d2b55b;">Land</button>
+</div>
+
+<div id="canvas-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="paint-canvas"></canvas>
+    <canvas id="grid-canvas"></canvas>
+</div>
+
+<script src="js/main.js"></script>
+<script src="js/grid.js"></script>
+<script src="js/paint.js"></script>
+
+</body>
+</html>
