@@ -11,6 +11,7 @@ const (
 	Land TileColorType = iota
 	CoastalWater
 	Water
+	Grass
 )
 
 type Tile struct {
@@ -40,7 +41,7 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile,
 			if paintedTiles[y][x] != -1 {
 				grid[y][x] = Tile{Color: paintedTiles[y][x]}
 			} else {
-				grid[y][x] = Tile{Color: TileColorType(rand.Intn(3))}
+				grid[y][x] = Tile{Color: TileColorType(rand.Intn(4))}
 			}
 		}
 	}
@@ -53,6 +54,9 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile,
 				for _, adjacent := range adjacentCoordinates(x, y, width, height) {
 					if grid[adjacent.y][adjacent.x].Color == Water {
 						grid[adjacent.y][adjacent.x].Color = CoastalWater
+					}
+					if grid[adjacent.y][adjacent.x].Color == Land {
+						grid[adjacent.y][adjacent.x].Color = Grass
 					}
 				}
 			}

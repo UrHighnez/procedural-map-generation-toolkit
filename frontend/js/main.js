@@ -106,6 +106,9 @@ async function generateCanvas() {
                         case 2:
                             ctx.fillStyle = '#0077be'; // Water
                             break;
+                        case 3:
+                            ctx.fillStyle = '#7EC850'; // Grass
+                            break;
                         default:
                             ctx.fillStyle = '#000000';
                             break;
