@@ -91,7 +91,7 @@ func adjacentCoordinates(x, y, width, height int) []coordinate {
 		{x, y + 1},
 	}
 
-	validAdjacent := []coordinate{}
+	var validAdjacent []coordinate
 
 	for _, coord := range adjacent {
 		if coord.x >= 0 && coord.x < width && coord.y >= 0 && coord.y < height {

@@ -73,7 +73,7 @@ async function generateCanvas() {
     const width = canvas.width; // Set the desired width
     const height = canvas.height; // Set the desired height
 
-    const tileSize = 20;
+    const tileSize = 30;
     const rows = Math.ceil(height / tileSize);
     const cols = Math.ceil(width / tileSize);
 
@@ -113,7 +113,7 @@ async function generateCanvas() {
                             ctx.fillStyle = '#000000';
                             break;
                     }
-                    ctx.fillRect(x * 20, y * 20, 20, 20); // Assuming a 20x20 pixel size per tile
+                    ctx.fillRect(x * 30, y * 30, 30, 30); // Assuming a 30x30 pixel size per tile
                 }
             }
         } else {
@@ -130,7 +130,7 @@ function getPaintedTiles() {
     const width = canvas.width;
     const height = canvas.height;
 
-    const tileSize = 20;
+    const tileSize = 30;
     const rows = Math.ceil(height / tileSize);
     const cols = Math.ceil(width / tileSize);
 
