@@ -47,35 +47,39 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile,
 	}
 
 	// Apply the constraints
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			if grid[y][x].Color == Land {
-				// Check adjacent tiles
+	for i := 0; i < 10; i++ { // Number of iterations
+		nextGrid := make([][]Tile, height)
+		for i := range nextGrid {
+			nextGrid[i] = make([]Tile, width)
+		}
+
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				landCount := 0
 				for _, adjacent := range adjacentCoordinates(x, y, width, height) {
-					if grid[adjacent.y][adjacent.x].Color == Water {
-						grid[adjacent.y][adjacent.x].Color = CoastalWater
+					if grid[adjacent.y][adjacent.x].Color == Land || grid[adjacent.y][adjacent.x].Color == Grass {
+						landCount++
 					}
-					if grid[adjacent.y][adjacent.x].Color == Land {
-						grid[adjacent.y][adjacent.x].Color = Grass
-					}
+				}
+
+				if grid[y][x].Color == Land && (landCount <= 1) {
+					nextGrid[y][x] = Tile{Color: CoastalWater}
+				} else if grid[y][x].Color == Land && (landCount >= 3) {
+					nextGrid[y][x] = Tile{Color: Grass}
+				} else if grid[y][x].Color == CoastalWater && landCount >= 3 {
+					nextGrid[y][x] = Tile{Color: Land}
+				} else if grid[y][x].Color == CoastalWater && landCount < 1 {
+					nextGrid[y][x] = Tile{Color: Water}
+				} else if grid[y][x].Color == Water && landCount > 0 {
+					nextGrid[y][x] = Tile{Color: CoastalWater}
+				} else {
+					nextGrid[y][x] = grid[y][x]
 				}
 			}
 		}
-	}
 
-	// Verify the constraints
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			if grid[y][x].Color == Land {
-				for _, adjacent := range adjacentCoordinates(x, y, width, height) {
-					if grid[adjacent.y][adjacent.x].Color == Water {
-						return nil, errors.New("constraint violation")
-					}
-				}
-			}
-		}
+		grid = nextGrid
 	}
-
 	return grid, nil
 }
 
