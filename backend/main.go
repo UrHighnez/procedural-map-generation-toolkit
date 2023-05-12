@@ -91,6 +91,7 @@ func generateTiles(c echo.Context) error {
 		Width        int                   `json:"width"`
 		Height       int                   `json:"height"`
 		PaintedTiles [][]wfc.TileColorType `json:"paintedTiles"`
+		Iterations   int                   `json:"iterations"`
 	}
 
 	req := new(GenerateRequest)
@@ -104,7 +105,7 @@ func generateTiles(c echo.Context) error {
 
 	fmt.Printf("paintedTiles dimensions: %d x %d (expected: %d x %d)\n", len(paintedTiles), len(paintedTiles[0]), height, width)
 
-	grid, err := wfc.GenerateTiles(width, height, paintedTiles)
+	grid, err := wfc.GenerateTiles(width, height, paintedTiles, req.Iterations)
 	if err != nil {
 		fmt.Printf("Tile generation error: %v\n", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{

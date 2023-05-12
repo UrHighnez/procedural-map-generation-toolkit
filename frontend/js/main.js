@@ -79,16 +79,21 @@ async function generateCanvas() {
 
     const paintedTiles = getPaintedTiles();
 
+    const iterationSlider = document.getElementById('iterationSlider');
+    let iterations = Number(iterationSlider.value);
+
     try {
         const response = await fetch('/generate', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({width: cols, height: rows, paintedTiles}),
+            body: JSON.stringify({width: cols, height: rows, paintedTiles, iterations}),
         });
 
 
         if (response.ok) {
             const mapData = await response.json();
+
+
             // Render the generated map on the canvas
             const canvas = document.getElementById('paint-canvas');
             const ctx = canvas.getContext('2d');

@@ -18,7 +18,7 @@ type Tile struct {
 	Color TileColorType
 }
 
-func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile, error) {
+func GenerateTiles(width, height int, paintedTiles [][]TileColorType, iterations int) ([][]Tile, error) {
 
 	if len(paintedTiles) != height {
 		return nil, errors.New("paintedTiles height does not match the provided height")
@@ -47,7 +47,7 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile,
 	}
 
 	// Apply the constraints
-	for i := 0; i < 10; i++ { // Number of iterations
+	for i := 0; i < iterations; i++ { // Number of iterations
 		nextGrid := make([][]Tile, height)
 		for i := range nextGrid {
 			nextGrid[i] = make([]Tile, width)
@@ -62,10 +62,13 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType) ([][]Tile,
 					}
 				}
 
+				// Constraints
 				if grid[y][x].Color == Land && (landCount <= 1) {
 					nextGrid[y][x] = Tile{Color: CoastalWater}
 				} else if grid[y][x].Color == Land && (landCount >= 3) {
 					nextGrid[y][x] = Tile{Color: Grass}
+				} else if grid[y][x].Color == Grass && (landCount < 3) {
+					nextGrid[y][x] = Tile{Color: Land}
 				} else if grid[y][x].Color == CoastalWater && landCount >= 3 {
 					nextGrid[y][x] = Tile{Color: Land}
 				} else if grid[y][x].Color == CoastalWater && landCount < 1 {
