@@ -64,17 +64,41 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType, iterations
 
 				// Constraints
 				if grid[y][x].Color == Land && (landCount <= 1) {
-					nextGrid[y][x] = Tile{Color: CoastalWater}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: CoastalWater}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else if grid[y][x].Color == Land && (landCount >= 3) {
-					nextGrid[y][x] = Tile{Color: Grass}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: Grass}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else if grid[y][x].Color == Grass && (landCount < 3) {
-					nextGrid[y][x] = Tile{Color: Land}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: Land}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else if grid[y][x].Color == CoastalWater && landCount >= 3 {
-					nextGrid[y][x] = Tile{Color: Land}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: Land}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else if grid[y][x].Color == CoastalWater && landCount < 1 {
-					nextGrid[y][x] = Tile{Color: Water}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: Water}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else if grid[y][x].Color == Water && landCount > 0 {
-					nextGrid[y][x] = Tile{Color: CoastalWater}
+					if rand.Float64() < 0.5 { // 50% chance
+						nextGrid[y][x] = Tile{Color: CoastalWater}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
 				} else {
 					nextGrid[y][x] = grid[y][x]
 				}
