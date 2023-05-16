@@ -8,7 +8,7 @@ function initButtons() {
     document.getElementById('load-btn').addEventListener('click', loadCanvas);
     document.getElementById('toggle-grid-btn').addEventListener('click', toggleGrid);
 
-    document.getElementById('generate-btn').addEventListener('click', generateCanvas);
+    document.getElementById('collapse-btn').addEventListener('click', collapseCanvas);
 
     document.getElementById('paint-water').addEventListener('click', () => setPaintColor('#0077be'));
     document.getElementById('paint-land').addEventListener('click', () => setPaintColor('#d2b55b'));
@@ -68,7 +68,7 @@ async function loadCanvas() {
     }
 }
 
-async function generateCanvas() {
+async function collapseCanvas() {
     const canvas = document.getElementById('paint-canvas');
     const width = canvas.width; // Set the desired width
     const height = canvas.height; // Set the desired height

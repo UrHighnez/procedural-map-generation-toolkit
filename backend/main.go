@@ -33,7 +33,7 @@ func main() {
 	e.GET("/load", loadMap)
 
 	// Route for generating tiles
-	e.POST("/generate", generateTiles)
+	e.POST("/generate", collapseTiles)
 
 	// Start the Echo server
 	err := e.Start(":8080")
@@ -86,7 +86,7 @@ func loadMap(c echo.Context) error {
 	return c.JSON(http.StatusOK, imageFiles)
 }
 
-func generateTiles(c echo.Context) error {
+func collapseTiles(c echo.Context) error {
 	type GenerateRequest struct {
 		Width        int                   `json:"width"`
 		Height       int                   `json:"height"`
@@ -105,7 +105,7 @@ func generateTiles(c echo.Context) error {
 
 	fmt.Printf("paintedTiles dimensions: %d x %d (expected: %d x %d)\n", len(paintedTiles), len(paintedTiles[0]), height, width)
 
-	grid, err := wfc.GenerateTiles(width, height, paintedTiles, req.Iterations)
+	grid, err := wfc.CollapseTiles(width, height, paintedTiles, req.Iterations)
 	if err != nil {
 		fmt.Printf("Tile generation error: %v\n", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
