@@ -53,10 +53,10 @@ function drawGrid() {
 }
 
 function drawSquareGrid(ctx, width, height) {
-    const gridSize = 30;
+    const gridSize = 20;
 
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;
 
     for (let x = 0; x <= width; x += gridSize) {
         ctx.beginPath();
@@ -74,7 +74,7 @@ function drawSquareGrid(ctx, width, height) {
 }
 
 function drawHexagonalGrid(ctx, width, height) {
-    const hexSize = 20;
+    const hexSize = 13.33;
     const hexHeight = hexSize * 2;
     const hexWidth = Math.sqrt(3) * hexSize;
     const hexHalfHeight = hexSize / 2;
@@ -83,7 +83,7 @@ function drawHexagonalGrid(ctx, width, height) {
     const horizontalSpacing = hexWidth;
 
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.5;
 
     const drawHexagon = (x, y) => {
         ctx.beginPath();

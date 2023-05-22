@@ -33,7 +33,7 @@ function initPainting() {
         const adjustedY = event.clientY - canvasRect.top;
 
         ctx.fillStyle = paintColor;
-        ctx.fillRect(Math.floor(adjustedX / 30) * 30, Math.floor(adjustedY / 30) * 30, 30, 30);
+        ctx.fillRect(Math.floor(adjustedX / 20) * 20, Math.floor(adjustedY / 20) * 20, 20, 20);
     }
 }
 
