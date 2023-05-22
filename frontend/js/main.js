@@ -165,6 +165,8 @@ function getColor(imageData) {
 
         if (r === 210 && g === 181 && b === 91) {
             return 0; // Land
+        } else if (r === 126 && g === 200 && b === 80) {
+            return 3; // Grass
         } else if (r === 127 && g === 195 && b === 227) {
             return 1; // Coastal Water
         } else if (r === 0 && g === 119 && b === 190) {
