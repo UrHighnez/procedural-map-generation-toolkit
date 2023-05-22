@@ -29,11 +29,15 @@ function initPainting() {
         if (!painting) return;
 
         const canvasRect = canvas.getBoundingClientRect();
-        const adjustedX = event.clientX - canvasRect.left;
-        const adjustedY = event.clientY - canvasRect.top;
+        const adjustedX = Math.floor((event.clientX - canvasRect.left) / 20) * 20;
+        const adjustedY = Math.floor((event.clientY - canvasRect.top) / 20) * 20;
 
         ctx.fillStyle = paintColor;
-        ctx.fillRect(Math.floor(adjustedX / 20) * 20, Math.floor(adjustedY / 20) * 20, 20, 20);
+        for (let y = 0; y < brushSize; y++) {
+            for (let x = 0; x < brushSize; x++) {
+                ctx.fillRect(adjustedX + x * 20, adjustedY + y * 20, 20, 20);
+            }
+        }
     }
 }
 

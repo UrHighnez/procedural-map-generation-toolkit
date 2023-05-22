@@ -1,3 +1,5 @@
+let brushSize = 1;
+
 function initButtons() {
     document.getElementById('tools-btn').addEventListener('click', () => {
         const toolsPanel = document.getElementById('tools-panel');
@@ -12,6 +14,11 @@ function initButtons() {
 
     document.getElementById('paint-water').addEventListener('click', () => setPaintColor('#0077be'));
     document.getElementById('paint-land').addEventListener('click', () => setPaintColor('#d2b55b'));
+
+    document.getElementById('brushSize').addEventListener('input', function (event) {
+        brushSize = parseInt(event.target.value);
+    });
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {
