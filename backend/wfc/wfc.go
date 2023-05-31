@@ -12,6 +12,7 @@ const (
 	CoastalWater
 	Water
 	Grass
+	Forest
 )
 
 type Tile struct {
@@ -41,7 +42,7 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 			if paintedTiles[y][x] != -1 {
 				grid[y][x] = Tile{Color: paintedTiles[y][x]}
 			} else {
-				grid[y][x] = Tile{Color: TileColorType(rand.Intn(4))}
+				grid[y][x] = Tile{Color: TileColorType(rand.Intn(5))}
 			}
 		}
 	}
@@ -57,7 +58,9 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 			for x := 0; x < width; x++ {
 				landCount := 0
 				for _, adjacent := range adjacentCoordinates(x, y, width, height) {
-					if grid[adjacent.y][adjacent.x].Color == Land || grid[adjacent.y][adjacent.x].Color == Grass {
+					if grid[adjacent.y][adjacent.x].Color == Land ||
+						grid[adjacent.y][adjacent.x].Color == Grass ||
+						grid[adjacent.y][adjacent.x].Color == Forest {
 						landCount++
 					}
 				}
@@ -81,8 +84,20 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == Grass && (landCount < 4) {
-					if rand.Float64() < 0.25 {
+					if rand.Float64() < 0.5 {
 						nextGrid[y][x] = Tile{Color: Land}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
+				} else if grid[y][x].Color == Grass && (landCount > 3) {
+					if rand.Float64() < 0.05 {
+						nextGrid[y][x] = Tile{Color: Forest}
+					} else {
+						nextGrid[y][x] = grid[y][x]
+					}
+				} else if grid[y][x].Color == Forest && (landCount < 4) {
+					if rand.Float64() < 0.25 {
+						nextGrid[y][x] = Tile{Color: Grass}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}

@@ -121,6 +121,9 @@ async function collapseCanvas() {
                         case 3:
                             ctx.fillStyle = '#7EC850'; // Grass
                             break;
+                        case 4:
+                            ctx.fillStyle = '#014421'; // Forest
+                            break;
                         default:
                             ctx.fillStyle = '#000000';
                             break;
@@ -178,6 +181,8 @@ function getColor(imageData) {
             return 1; // Coastal Water
         } else if (r === 0 && g === 119 && b === 190) {
             return 2; // Water
+        } else if (r === 1 && g === 68 && b === 33) {
+            return 4; // Forest
         }
     }
 
