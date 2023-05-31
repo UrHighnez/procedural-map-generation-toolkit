@@ -62,33 +62,38 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 					}
 				}
 
-				// Constraints
+				//Constraints
+
+				//if paintedTiles[y][x] != -1 {
+				//	nextGrid[y][x] = grid[y][x] // Keep painted tiles unchanged
+				//} else
+
 				if grid[y][x].Color == Land && (landCount <= 1) {
-					if rand.Float64() < 0.5 { // 50% chance
+					if rand.Float64() < 0.05 { // 5% chance
 						nextGrid[y][x] = Tile{Color: CoastalWater}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == Land && (landCount > 3) {
-					if rand.Float64() < 0.5 {
+					if rand.Float64() < 0.75 {
 						nextGrid[y][x] = Tile{Color: Grass}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == Grass && (landCount < 4) {
-					if rand.Float64() < 0.5 {
+					if rand.Float64() < 0.25 {
 						nextGrid[y][x] = Tile{Color: Land}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == CoastalWater && landCount >= 3 {
-					if rand.Float64() < 0.5 {
+					if rand.Float64() < 0.25 {
 						nextGrid[y][x] = Tile{Color: Land}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == CoastalWater && landCount < 1 {
-					if rand.Float64() < 0.5 {
+					if rand.Float64() < 0.1 {
 						nextGrid[y][x] = Tile{Color: Water}
 					} else {
 						nextGrid[y][x] = grid[y][x]
