@@ -64,6 +64,12 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 						landCount++
 					}
 				}
+				forestCount := 0
+				for _, adjacent := range adjacentCoordinates(x, y, width, height) {
+					if grid[adjacent.y][adjacent.x].Color == Forest {
+						forestCount++
+					}
+				}
 
 				//Constraints
 
@@ -84,19 +90,19 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 						nextGrid[y][x] = grid[y][x]
 					}
 				} else if grid[y][x].Color == Grass && (landCount < 4) {
-					if rand.Float64() < 0.5 {
+					if rand.Float64() < 0.75 {
 						nextGrid[y][x] = Tile{Color: Land}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
-				} else if grid[y][x].Color == Grass && (landCount > 3) {
-					if rand.Float64() < 0.05 {
+				} else if grid[y][x].Color == Grass && (forestCount > 0 && forestCount <= 3) {
+					if rand.Float64() < 0.3 {
 						nextGrid[y][x] = Tile{Color: Forest}
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
-				} else if grid[y][x].Color == Forest && (landCount < 4) {
-					if rand.Float64() < 0.25 {
+				} else if grid[y][x].Color == Forest && (forestCount <= 2 || forestCount > 3) {
+					if rand.Float64() < 0.4 {
 						nextGrid[y][x] = Tile{Color: Grass}
 					} else {
 						nextGrid[y][x] = grid[y][x]
