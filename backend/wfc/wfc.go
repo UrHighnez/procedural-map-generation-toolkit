@@ -95,7 +95,7 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 					} else {
 						nextGrid[y][x] = grid[y][x]
 					}
-				} else if grid[y][x].Color == Grass && (forestCount > 0 && forestCount <= 3) {
+				} else if grid[y][x].Color == Grass && (landCount > 1 && forestCount > 0 && forestCount <= 3) {
 					if rand.Float64() < 0.3 {
 						nextGrid[y][x] = Tile{Color: Forest}
 					} else {
