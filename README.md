@@ -11,25 +11,32 @@ Map Loading and Saving: The application supports loading and saving maps as imag
 ## Installation
 1. Clone the repository:
 
-git clone https://github.com/your-username/world-generation-wfc.git
-
+```
+git clone https://github.com/your-username/world-generation-wfc.git</code>
+```
 
 2. Install the necessary dependencies:
 
+```
 cd world-generation-wfc
 go get
+```
 
 
 3. Build the project:
 
+```
 go build
+```
 
 ## Usage
 1. Customize the parameters for generating the map in the `wfc.go` file.
 
 2. Run the program:
 
+```
 go run ./world-generation-wfc
+```
 
 
 3. You can access the application under http://localhost:8080/ in a web browser to visualize the generated world.
