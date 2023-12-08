@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,29 +17,20 @@ import (
 )
 
 func main() {
-	// Create a new Echo instance
 	e := echo.New()
 
-	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Serve static frontend files
 	e.Static("/", "frontend")
-	// Serve saved map images
 	e.Static("/maps", "saved_maps")
 
-	// Routes for saving and loading maps
 	e.POST("/save", saveMap)
 	e.GET("/load", loadMap)
-
-	// Route for generating tiles
 	e.POST("/generate", collapseTiles)
 
-	// Start the Echo server
-	err := e.Start(":8080")
-	if err != nil {
-		return
+	if err := e.Start(":8080"); err != nil {
+		log.Fatalf("Echo server startup failed: %v", err)
 	}
 }
 
@@ -49,24 +41,24 @@ func saveMap(c echo.Context) error {
 
 	req := new(SaveRequest)
 	if err := c.Bind(req); err != nil {
+		log.Printf("Invalid request format: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request format")
 	}
 
-	// Decode base64 image data
 	imageData := req.ImageData[strings.IndexByte(req.ImageData, ',')+1:]
 	data, err := base64.StdEncoding.DecodeString(imageData)
 	if err != nil {
+		log.Printf("Invalid image data: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid image data")
 	}
 
-	// Save the image as a file on the server
 	fileName := fmt.Sprintf("map-%d.png", time.Now().Unix())
-	err = os.WriteFile("saved_maps/"+fileName, data, 0644)
-	if err != nil {
+	if err = os.WriteFile("saved_maps/"+fileName, data, 0644); err != nil {
+		log.Printf("Failed to save the image: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to save the image")
 	}
 
-	return c.JSON(http.StatusOK, "Map saved")
+	return c.JSON(http.StatusOK, map[string]string{"message": "Map saved", "fileName": fileName})
 }
 
 func loadMap(c echo.Context) error {
@@ -80,6 +72,7 @@ func loadMap(c echo.Context) error {
 	})
 
 	if err != nil {
+		log.Printf("Failed to load map images: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load map images")
 	}
 
@@ -96,18 +89,17 @@ func collapseTiles(c echo.Context) error {
 
 	req := new(GenerateRequest)
 	if err := c.Bind(req); err != nil {
+		log.Printf("Invalid request format: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request format")
 	}
 
-	width := req.Width
-	height := req.Height
-	paintedTiles := req.PaintedTiles
-
+	width, height, paintedTiles := req.Width, req.Height, req.PaintedTiles
 	fmt.Printf("paintedTiles dimensions: %d x %d (expected: %d x %d)\n", len(paintedTiles), len(paintedTiles[0]), height, width)
 
-	grid, err := wfc.CollapseTiles(width, height, paintedTiles, req.Iterations)
+	rules := wfc.CreateDefaultRules()
+	grid, err := wfc.CollapseTiles(width, height, paintedTiles, req.Iterations, rules)
 	if err != nil {
-		fmt.Printf("Tile generation error: %v\n", err)
+		log.Printf("Tile generation error: %v\n", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Tile generation failed",
 		})
