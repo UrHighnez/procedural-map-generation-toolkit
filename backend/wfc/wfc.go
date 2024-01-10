@@ -36,7 +36,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: CoastalWater,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-				return t.Color == Land && landCount <= 1 && rand.Float64() < 0.1
+				return t.Color == Land && landCount <= 2 && rand.Float64() < 0.1
 			},
 		},
 		// Land to Grass
@@ -45,7 +45,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: Grass,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-				return t.Color == Land && landCount > 3 && rand.Float64() < 0.75
+				return t.Color == Land && landCount > 6 && rand.Float64() < 0.75
 			},
 		},
 		// Grass to Land
@@ -54,7 +54,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: Land,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-				return t.Color == Grass && landCount < 4 && rand.Float64() < 0.75
+				return t.Color == Grass && landCount < 8 && rand.Float64() < 0.75
 			},
 		},
 		// Grass to Forest
@@ -64,7 +64,7 @@ func CreateDefaultRules() []TerrainRule {
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land, Grass, Forest)
 				forestCount := CountTilesByType(neighbors, Forest)
-				return t.Color == Grass && landCount > 1 && forestCount > 0 && forestCount <= 3 && rand.Float64() < 0.3
+				return t.Color == Grass && landCount > 2 && forestCount > 0 && forestCount <= 6 && rand.Float64() < 0.3
 			},
 		},
 		// Forest to Grass
@@ -73,7 +73,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: Grass,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				forestCount := CountTilesByType(neighbors, Forest)
-				return t.Color == Forest && (forestCount <= 2 || forestCount > 3) && rand.Float64() < 0.4
+				return t.Color == Forest && (forestCount <= 4 || forestCount > 4) && rand.Float64() < 0.4
 			},
 		},
 		// CoastalWater to Land
@@ -82,7 +82,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: Land,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land)
-				return t.Color == CoastalWater && landCount >= 3 && rand.Float64() < 0.25
+				return t.Color == CoastalWater && landCount >= 6 && rand.Float64() < 0.25
 			},
 		},
 		// CoastalWater to Water
@@ -91,7 +91,7 @@ func CreateDefaultRules() []TerrainRule {
 			TargetColor: Water,
 			Condition: func(t Tile, neighbors []Tile) bool {
 				landCount := CountTilesByType(neighbors, Land)
-				return t.Color == CoastalWater && landCount < 1 && rand.Float64() < 0.2
+				return t.Color == CoastalWater && landCount < 2 && rand.Float64() < 0.2
 			},
 		},
 		// Water to CoastalWater
@@ -174,10 +174,14 @@ type coordinate struct {
 
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	coordinates := []coordinate{
+		{x - 1, y - 1},
 		{x - 1, y},
-		{x + 1, y},
+		{x - 1, y + 1},
 		{x, y - 1},
 		{x, y + 1},
+		{x + 1, y - 1},
+		{x + 1, y},
+		{x + 1, y + 1},
 	}
 
 	var neighbors []Tile
