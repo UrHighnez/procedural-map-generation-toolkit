@@ -23,7 +23,7 @@ type Tile struct {
 type TerrainRule struct {
 	SourceColor TileColorType
 	TargetColor TileColorType
-	Condition   func(Tile, []Tile) bool
+	Condition   func(Tile, []Tile, int, int, [][]Tile) bool
 }
 
 func CreateDefaultRules() []TerrainRule {
@@ -39,7 +39,7 @@ func CreateDefaultRules() []TerrainRule {
 	}
 }
 
-func createRule(source, target TileColorType, condition func(Tile, []Tile) bool) TerrainRule {
+func createRule(source, target TileColorType, condition func(Tile, []Tile, int, int, [][]Tile) bool) TerrainRule {
 	return TerrainRule{
 		SourceColor: source,
 		TargetColor: target,
@@ -47,43 +47,48 @@ func createRule(source, target TileColorType, condition func(Tile, []Tile) bool)
 	}
 }
 
-func landToCoastalWaterCondition(t Tile, neighbors []Tile) bool {
+func landToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
 	return t.Color == Land && landCount <= 2 && rand.Float64() < 0.05
 }
 
-func landToGrassCondition(t Tile, neighbors []Tile) bool {
+func landToGrassCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount > 3 && rand.Float64() < 0.6
+	return t.Color == Land && landCount > 3 && rand.Float64() < 0.8
 }
 
-func grassToLandCondition(t Tile, neighbors []Tile) bool {
+func grassToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
 	return t.Color == Grass && landCount < 6 && rand.Float64() < 0.6
 }
 
-func grassToForestCondition(t Tile, neighbors []Tile) bool {
+func grassToForestCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
 	forestCount := CountTilesByType(neighbors, Forest)
-	return t.Color == Grass && landCount > 3 && forestCount > 1 && forestCount <= 4 && rand.Float64() < 0.5
+	return t.Color == Grass && landCount > 3 && forestCount > 1 && forestCount <= 4 && rand.Float64() < 0.7
 }
 
-func forestToGrassCondition(t Tile, neighbors []Tile) bool {
+func forestToGrassCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	forestCount := CountTilesByType(neighbors, Forest)
-	return t.Color == Forest && (forestCount <= 2 || forestCount > 4) && rand.Float64() < 0.5
+	if t.Color == Forest && forestCount >= 2 && forestCount <= 4 && rand.Float64() < 0.3 {
+		// Check for small clusters of forest tiles and break them up
+		cluster := checkForSquareCluster(grid, x, y, Forest)
+		return cluster
+	}
+	return t.Color == Forest && rand.Float64() < 0.3
 }
 
-func coastalWaterToLandCondition(t Tile, neighbors []Tile) bool {
+func coastalWaterToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
 	return t.Color == CoastalWater && landCount >= 4 && rand.Float64() < 0.3
 }
 
-func coastalWaterToWaterCondition(t Tile, neighbors []Tile) bool {
+func coastalWaterToWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
 	return t.Color == CoastalWater && landCount < 2 && rand.Float64() < 0.5
 }
 
-func waterToCoastalWaterCondition(t Tile, neighbors []Tile) bool {
+func waterToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
 	return t.Color == Water && landCount > 0 && rand.Float64() < 0.4
 }
@@ -141,7 +146,7 @@ func applyRules(grid [][]Tile, rules []TerrainRule, width, height int) [][]Tile 
 			neighbors := getAdjacentTiles(grid, x, y, width, height)
 			ruleApplied := false
 			for _, rule := range rules {
-				if rule.Condition(currentTile, neighbors) {
+				if rule.Condition(currentTile, neighbors, x, y, grid) {
 					nextGrid[y][x] = Tile{Color: rule.TargetColor}
 					ruleApplied = true
 					break
@@ -178,4 +183,18 @@ func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 		}
 	}
 	return neighbors
+}
+
+func checkForSquareCluster(grid [][]Tile, x, y int, color TileColorType) bool {
+	cluster := false
+	// Add logic to check for a 2x2 cluster of the specified color
+	// For example, check if (x,y), (x+1,y), (x,y+1), (x+1,y+1) are all of the specified color
+	if (x+1 < len(grid[0]) && y+1 < len(grid)) &&
+		grid[y][x].Color == color &&
+		grid[y][x+1].Color == color &&
+		grid[y+1][x].Color == color &&
+		grid[y+1][x+1].Color == color {
+		cluster = true
+	}
+	return cluster
 }
