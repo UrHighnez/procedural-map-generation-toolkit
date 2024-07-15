@@ -49,43 +49,43 @@ func createRule(source, target TileColorType, condition func(Tile, []Tile) bool)
 
 func landToCoastalWaterCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount <= 2 && rand.Float64() < 0.1
+	return t.Color == Land && landCount <= 2 && rand.Float64() < 0.05
 }
 
 func landToGrassCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount > 5 && rand.Float64() < 0.75
+	return t.Color == Land && landCount > 3 && rand.Float64() < 0.6
 }
 
 func grassToLandCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Grass && landCount < 8 && rand.Float64() < 0.75
+	return t.Color == Grass && landCount < 6 && rand.Float64() < 0.6
 }
 
 func grassToForestCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
 	forestCount := CountTilesByType(neighbors, Forest)
-	return t.Color == Grass && landCount > 5 && forestCount > 0 && forestCount <= 6 && rand.Float64() < 0.5
+	return t.Color == Grass && landCount > 3 && forestCount > 1 && forestCount <= 4 && rand.Float64() < 0.5
 }
 
 func forestToGrassCondition(t Tile, neighbors []Tile) bool {
 	forestCount := CountTilesByType(neighbors, Forest)
-	return t.Color == Forest && (forestCount <= 4 || forestCount > 4) && rand.Float64() < 0.4
+	return t.Color == Forest && (forestCount <= 2 || forestCount > 4) && rand.Float64() < 0.5
 }
 
 func coastalWaterToLandCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == CoastalWater && landCount >= 6 && rand.Float64() < 0.25
+	return t.Color == CoastalWater && landCount >= 4 && rand.Float64() < 0.3
 }
 
 func coastalWaterToWaterCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == CoastalWater && landCount < 2 && rand.Float64() < 0.2
+	return t.Color == CoastalWater && landCount < 2 && rand.Float64() < 0.5
 }
 
 func waterToCoastalWaterCondition(t Tile, neighbors []Tile) bool {
 	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == Water && landCount > 0 && rand.Float64() < 0.3
+	return t.Color == Water && landCount > 0 && rand.Float64() < 0.4
 }
 
 func CountTilesByType(neighbors []Tile, types ...TileColorType) int {
