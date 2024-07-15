@@ -119,10 +119,10 @@ async function collapseCanvas() {
                             ctx.fillStyle = '#0077be'; // Water
                             break;
                         case 3:
-                            ctx.fillStyle = '#7EC850'; // Grass
+                            ctx.fillStyle = '#74B72E'; // Grass
                             break;
                         case 4:
-                            ctx.fillStyle = '#014421'; // Forest
+                            ctx.fillStyle = '#028A0F'; // Forest
                             break;
                         default:
                             ctx.fillStyle = '#000000';
@@ -175,13 +175,13 @@ function getColor(imageData) {
 
         if (r === 210 && g === 181 && b === 91) {
             return 0; // Land
-        } else if (r === 126 && g === 200 && b === 80) {
-            return 3; // Grass
         } else if (r === 127 && g === 195 && b === 227) {
             return 1; // Coastal Water
         } else if (r === 0 && g === 119 && b === 190) {
             return 2; // Water
-        } else if (r === 1 && g === 68 && b === 33) {
+        } else if (r === 116 && g === 183 && b === 46) {
+            return 3; // Grass
+        } else if (r === 2 && g === 138 && b === 15) {
             return 4; // Forest
         }
     }
