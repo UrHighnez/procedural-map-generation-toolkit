@@ -14,6 +14,7 @@ function initButtons() {
 
     document.getElementById('paint-water').addEventListener('click', () => setPaintColor('#0077be'));
     document.getElementById('paint-land').addEventListener('click', () => setPaintColor('#d2b55b'));
+    document.getElementById('paint-forest').addEventListener('click', () => setPaintColor('#028A0F'));
 
     document.getElementById('brushSize').addEventListener('input', function (event) {
         brushSize = parseInt(event.target.value);
