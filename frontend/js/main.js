@@ -1,4 +1,4 @@
-let brushSize = 1;
+let brushSize = 3;
 
 function initButtons() {
     document.getElementById('tools-btn').addEventListener('click', () => {
@@ -87,6 +87,8 @@ async function collapseCanvas() {
 
     const paintedTiles = getPaintedTiles();
 
+    console.log('There are ' + paintedTiles.length + ' provided painted tiles');
+
     const iterationSlider = document.getElementById('iterationSlider');
     let iterations = Number(iterationSlider.value);
 
@@ -111,13 +113,13 @@ async function collapseCanvas() {
                     const color = mapData[y][x].Color;
                     switch (color) {
                         case 0:
-                            ctx.fillStyle = '#d2b55b'; // Land
+                            ctx.fillStyle = '#0077be'; // Water
                             break;
                         case 1:
                             ctx.fillStyle = '#7fc3e3'; // CoastalWater
                             break;
                         case 2:
-                            ctx.fillStyle = '#0077be'; // Water
+                            ctx.fillStyle = '#d2b55b'; // Land
                             break;
                         case 3:
                             ctx.fillStyle = '#74B72E'; // Grass
@@ -140,6 +142,28 @@ async function collapseCanvas() {
     }
 }
 
+function getColor(imageData) {
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+
+        if (r === 0 && g === 119 && b === 190) {
+            return 0; // Water
+        } else if (r === 127 && g === 195 && b === 227) {
+            return 1; // Coastal Water
+        } else if (r === 210 && g === 181 && b === 91) {
+            return 2; // Land
+        } else if (r === 116 && g === 183 && b === 46) {
+            return 3; // Grass
+        } else if (r === 2 && g === 138 && b === 15) {
+            return 4; // Forest
+        }
+    }
+
+    return -1; // Empty tile
+}
+
 function getPaintedTiles() {
     const canvas = document.getElementById('paint-canvas');
     const ctx = canvas.getContext('2d');
@@ -157,7 +181,8 @@ function getPaintedTiles() {
             const imgData = ctx.getImageData(x * tileSize, y * tileSize, tileSize, tileSize);
             const color = getColor(imgData);
 
-            if (color) {
+            if (color !== -1) {
+                // console.log(`Detected color ${color} at (${x}, ${y})`);
                 tiles[y][x] = color;
             }
         }
@@ -165,29 +190,3 @@ function getPaintedTiles() {
 
     return tiles;
 }
-
-function getColor(imageData) {
-    // Check the imageData and return the corresponding color index, or null if the tile is empty
-
-    for (let i = 0; i < imageData.data.length; i += 4) {
-        const r = imageData.data[i];
-        const g = imageData.data[i + 1];
-        const b = imageData.data[i + 2];
-
-        if (r === 210 && g === 181 && b === 91) {
-            return 0; // Land
-        } else if (r === 127 && g === 195 && b === 227) {
-            return 1; // Coastal Water
-        } else if (r === 0 && g === 119 && b === 190) {
-            return 2; // Water
-        } else if (r === 116 && g === 183 && b === 46) {
-            return 3; // Grass
-        } else if (r === 2 && g === 138 && b === 15) {
-            return 4; // Forest
-        }
-    }
-
-    return -1; // Empty tile
-}
-
-

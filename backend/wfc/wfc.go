@@ -9,9 +9,9 @@ import (
 type TileColorType int
 
 const (
-	Land TileColorType = iota
+	Water TileColorType = iota
 	CoastalWater
-	Water
+	Land
 	Grass
 	Forest
 )
@@ -28,14 +28,14 @@ type TerrainRule struct {
 
 func CreateDefaultRules() []TerrainRule {
 	return []TerrainRule{
+		createRule(Water, CoastalWater, waterToCoastalWaterCondition),
+		createRule(CoastalWater, Water, coastalWaterToWaterCondition),
+		createRule(CoastalWater, Land, coastalWaterToLandCondition),
 		createRule(Land, CoastalWater, landToCoastalWaterCondition),
 		createRule(Land, Grass, landToGrassCondition),
 		createRule(Grass, Land, grassToLandCondition),
 		createRule(Grass, Forest, grassToForestCondition),
 		createRule(Forest, Grass, forestToGrassCondition),
-		createRule(CoastalWater, Land, coastalWaterToLandCondition),
-		createRule(CoastalWater, Water, coastalWaterToWaterCondition),
-		createRule(Water, CoastalWater, waterToCoastalWaterCondition),
 	}
 }
 
@@ -47,14 +47,29 @@ func createRule(source, target TileColorType, condition func(Tile, []Tile, int, 
 	}
 }
 
+func waterToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
+	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
+	return t.Color == Water && landCount > 0 && rand.Float64() < 0.3*randomnessFactor
+}
+
+func coastalWaterToWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
+	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
+	return t.Color == CoastalWater && landCount < 3 && rand.Float64() < 0.35*randomnessFactor
+}
+
+func coastalWaterToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
+	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
+	return t.Color == CoastalWater && landCount > 4 && rand.Float64() < 0.07*randomnessFactor
+}
+
 func landToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount <= 2 && rand.Float64() < 0.02*randomnessFactor
+	return t.Color == Land && landCount < 4 && rand.Float64() < 0.4*randomnessFactor
 }
 
 func landToGrassCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount > 3 && rand.Float64() < 0.6*randomnessFactor
+	return t.Color == Land && landCount > 5 && rand.Float64() < 0.08*randomnessFactor
 }
 
 func grassToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
@@ -76,21 +91,6 @@ func forestToGrassCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, r
 		return cluster
 	}
 	return t.Color == Forest && rand.Float64() < 0.2*randomnessFactor
-}
-
-func coastalWaterToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
-	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == CoastalWater && landCount >= 4 && rand.Float64() < 0.3*randomnessFactor
-}
-
-func coastalWaterToWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
-	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == CoastalWater && landCount < 2 && rand.Float64() < 0.3*randomnessFactor
-}
-
-func waterToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
-	landCount := CountTilesByType(neighbors, Land)
-	return t.Color == Water && landCount > 0 && rand.Float64() < 0.5*randomnessFactor
 }
 
 func CountTilesByType(neighbors []Tile, types ...TileColorType) int {
@@ -117,7 +117,11 @@ func CollapseTiles(width, height int, paintedTiles [][]TileColorType, iterations
 	for i := 0; i < iterations; i++ {
 		// Increase the decay rate
 		randomnessFactor := 1.0 - float64(i*i)/float64(iterations*iterations)
+
+		log.Printf("Randomness factor at iteration %d: %f", i, randomnessFactor)
+
 		grid = applyRules(grid, rules, width, height, randomnessFactor)
+
 		log.Printf("Iteration %d complete", i)
 	}
 
@@ -131,8 +135,11 @@ func initializeGrid(width, height int, paintedTiles [][]TileColorType) [][]Tile 
 		for x := 0; x < width; x++ {
 			if paintedTiles[y][x] != -1 {
 				grid[y][x] = Tile{Color: paintedTiles[y][x]}
+				log.Printf("Initialized painted tile at (%d, %d) with color %d", x, y, paintedTiles[y][x])
 			} else {
-				grid[y][x] = Tile{Color: TileColorType(rand.Intn(5))}
+				randomColor := TileColorType(rand.Intn(5))
+				grid[y][x] = Tile{Color: randomColor}
+				log.Printf("Initialized random tile at (%d, %d) with color %d", x, y, randomColor)
 			}
 		}
 	}
@@ -150,6 +157,7 @@ func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnes
 			for _, rule := range rules {
 				if rule.Condition(currentTile, neighbors, x, y, grid, randomnessFactor) {
 					nextGrid[y][x] = Tile{Color: rule.TargetColor}
+					log.Printf("Applied rule from %d to %d at (%d, %d)", rule.SourceColor, rule.TargetColor, x, y)
 					ruleApplied = true
 					break
 				}
@@ -179,9 +187,9 @@ func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	}
 
 	var neighbors []Tile
-	for _, coord := range coordinates {
-		if coord.x >= 0 && coord.x < width && coord.y >= 0 && coord.y < height {
-			neighbors = append(neighbors, grid[coord.y][coord.x])
+	for _, coords := range coordinates {
+		if coords.x >= 0 && coords.x < width && coords.y >= 0 && coords.y < height {
+			neighbors = append(neighbors, grid[coords.y][coords.x])
 		}
 	}
 	return neighbors
