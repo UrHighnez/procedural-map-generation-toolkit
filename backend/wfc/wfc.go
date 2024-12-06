@@ -54,7 +54,7 @@ func waterToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]T
 
 func coastalWaterToWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == CoastalWater && landCount < 3 && rand.Float64() < 0.35*randomnessFactor
+	return t.Color == CoastalWater && landCount < 3 && rand.Float64() < 0.4*randomnessFactor
 }
 
 func coastalWaterToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
@@ -64,12 +64,12 @@ func coastalWaterToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Ti
 
 func landToCoastalWaterCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount < 4 && rand.Float64() < 0.4*randomnessFactor
+	return t.Color == Land && landCount < 4 && rand.Float64() < 0.6*randomnessFactor
 }
 
 func landToGrassCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {
 	landCount := CountTilesByType(neighbors, Land, Grass, Forest)
-	return t.Color == Land && landCount > 5 && rand.Float64() < 0.08*randomnessFactor
+	return t.Color == Land && landCount > 6 && rand.Float64() < 0.08*randomnessFactor
 }
 
 func grassToLandCondition(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomnessFactor float64) bool {

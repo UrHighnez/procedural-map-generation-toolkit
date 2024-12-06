@@ -29,7 +29,13 @@ func main() {
 	e.GET("/load", loadMap)
 	e.POST("/generate", collapseTiles)
 
-	if err := e.Start(":8080"); err != nil {
+	// Add a catch-all route for debugging purposes
+	e.GET("/*", func(c echo.Context) error {
+		log.Printf("Requested file: %s", c.Request().URL.Path)
+		return c.File(filepath.Join("frontend", c.Request().URL.Path))
+	})
+
+	if err := e.Start(":8000"); err != nil {
 		log.Fatalf("Echo server startup failed: %v", err)
 	}
 }
