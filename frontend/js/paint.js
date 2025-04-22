@@ -29,13 +29,13 @@ function initPainting() {
         if (!painting) return;
 
         const canvasRect = canvas.getBoundingClientRect();
-        const adjustedX = Math.floor((event.clientX - canvasRect.left) / 20) * 20;
-        const adjustedY = Math.floor((event.clientY - canvasRect.top) / 20) * 20;
+        const adjustedX = Math.floor((event.clientX - canvasRect.left) / TileSize) * TileSize;
+        const adjustedY = Math.floor((event.clientY - canvasRect.top) / TileSize) * TileSize;
 
         ctx.fillStyle = paintColor;
         for (let y = 0; y < brushSize; y++) {
             for (let x = 0; x < brushSize; x++) {
-                ctx.fillRect(adjustedX + x * 20, adjustedY + y * 20, 20, 20);
+                ctx.fillRect(adjustedX + x * TileSize, adjustedY + y * TileSize, TileSize, TileSize);
             }
         }
     }

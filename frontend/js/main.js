@@ -8,7 +8,6 @@ function initButtons() {
 
     document.getElementById('save-btn').addEventListener('click', saveCanvas);
     document.getElementById('load-btn').addEventListener('click', loadCanvas);
-    document.getElementById('toggle-grid-btn').addEventListener('click', toggleGrid);
 
     document.getElementById('collapse-btn').addEventListener('click', collapseCanvas);
 
@@ -81,9 +80,8 @@ async function collapseCanvas() {
     const width = canvas.width; // Set the desired width
     const height = canvas.height; // Set the desired height
 
-    const tileSize = 20;
-    const rows = Math.ceil(height / tileSize);
-    const cols = Math.ceil(width / tileSize);
+    const rows = Math.ceil(height / TileSize);
+    const cols = Math.ceil(width / TileSize);
 
     const paintedTiles = getPaintedTiles();
 
@@ -131,7 +129,7 @@ async function collapseCanvas() {
                             ctx.fillStyle = '#000000';
                             break;
                     }
-                    ctx.fillRect(x * 20, y * 20, 20, 20); // 20x20 pixel size per tile
+                    ctx.fillRect(x * TileSize, y * TileSize, TileSize, TileSize); // 10x10 pixel size per tile
                 }
             }
         } else {
@@ -170,15 +168,14 @@ function getPaintedTiles() {
     const width = canvas.width;
     const height = canvas.height;
 
-    const tileSize = 20;
-    const rows = Math.ceil(height / tileSize);
-    const cols = Math.ceil(width / tileSize);
+    const rows = Math.ceil(height / TileSize);
+    const cols = Math.ceil(width / TileSize);
 
     const tiles = new Array(rows).fill(-1).map(() => new Array(cols).fill(-1));
 
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-            const imgData = ctx.getImageData(x * tileSize, y * tileSize, tileSize, tileSize);
+            const imgData = ctx.getImageData(x * TileSize, y * TileSize, TileSize, TileSize);
             const color = getColor(imgData);
 
             if (color !== -1) {
