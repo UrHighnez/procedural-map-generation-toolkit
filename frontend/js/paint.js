@@ -29,16 +29,28 @@ function initPainting() {
         if (!painting) return;
 
         const canvasRect = canvas.getBoundingClientRect();
-        const adjustedX = Math.floor((event.clientX - canvasRect.left) / TileSize) * TileSize;
-        const adjustedY = Math.floor((event.clientY - canvasRect.top) / TileSize) * TileSize;
+        const mouseX = event.clientX - canvasRect.left;
+        const mouseY = event.clientY - canvasRect.top;
+
+        const centerCellX = Math.floor(mouseX / TileSize);
+        const centerCellY = Math.floor(mouseY / TileSize);
+
+        // Calculate offset
+        const halfBrush = Math.floor(brushSize / 2);
 
         ctx.fillStyle = paintColor;
         for (let y = 0; y < brushSize; y++) {
             for (let x = 0; x < brushSize; x++) {
-                ctx.fillRect(adjustedX + x * TileSize, adjustedY + y * TileSize, TileSize, TileSize);
+                ctx.fillRect(
+                    (centerCellX + x - halfBrush) * TileSize,
+                    (centerCellY + y - halfBrush) * TileSize,
+                    TileSize,
+                    TileSize
+                );
             }
         }
     }
+
 }
 
 document.addEventListener('DOMContentLoaded', initPainting);

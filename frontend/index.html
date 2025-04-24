@@ -9,23 +9,33 @@
 <body>
 
 <div id="toolbar">
-    <button id="save-btn">Save</button>
-    <button id="load-btn">Load</button>
     <button id="tools-btn">Tools</button>
     <button id="collapse-btn">Collapse</button>
-    <label for="iterationSlider">Iterations</label>
-    <input type="range" min="1" max="10" value="8" class="slider" id="iterationSlider">
+    <button id="save-btn">Save</button>
+    <button id="load-btn">Load</button>
 </div>
 
 <div id="tools-panel" class="hidden">
-<!--    <button id="toggle-grid-btn">Toggle Grid</button>-->
 
-    <button id="paint-water" class="paint-btn" style="background-color: #0077be;">Water</button>
-    <button id="paint-land" class="paint-btn" style="background-color: #d2b55b;">Land</button>
-    <button id="paint-forest" class="paint-btn" style="background-color: #028A0F;">Forest</button>
+    <div>
+        <button id="paint-water" class="paint-btn" style="background-color: #0077be;">Water</button>
+        <button id="paint-land" class="paint-btn" style="background-color: #d2b55b;">Land</button>
+        <button id="paint-forest" class="paint-btn" style="background-color: #028A0F;">Forest</button>
+    </div>
 
-    <label for="brushSize">Brush-size</label>
-    <input type="range" id="brushSize" name="brushSize" min="1" max="5" value="3">
+    <div>
+        <label for="brushSize-slider">
+            Brush-size: <span id="brushSize-value"></span>
+        </label>
+        <input type="range" min="1" max="5" value="3" id="brushSize-slider">
+    </div>
+
+    <div>
+        <label for="iteration-slider">
+            Iterations: <span id="iteration-value"></span>
+        </label>
+        <input type="range" min="1" max="10" value="8" class="slider" id="iteration-slider">
+    </div>
 
 </div>
 

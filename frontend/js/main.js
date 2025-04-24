@@ -3,6 +3,7 @@ let brushSize = 3;
 function initButtons() {
     document.getElementById('tools-btn').addEventListener('click', () => {
         const toolsPanel = document.getElementById('tools-panel');
+        toolsPanel.classList.toggle('tools-panel-visible');
         toolsPanel.classList.toggle('hidden');
     });
 
@@ -15,10 +16,25 @@ function initButtons() {
     document.getElementById('paint-land').addEventListener('click', () => setPaintColor('#d2b55b'));
     document.getElementById('paint-forest').addEventListener('click', () => setPaintColor('#028A0F'));
 
-    document.getElementById('brushSize').addEventListener('input', function (event) {
+    const brushSizeSlider = document.getElementById('brushSize-slider');
+    const brushSizeValue = document.getElementById('brushSize-value');
+
+    brushSizeSlider.addEventListener('input', function (event) {
         brushSize = parseInt(event.target.value);
+        brushSizeValue.textContent = brushSize;
     });
 
+
+    brushSizeValue.textContent = brushSizeValue.value = brushSize;
+
+    const iterationSlider = document.getElementById('iteration-slider');
+    const iterationValue = document.getElementById('iteration-value');
+
+    iterationValue.textContent = iterationSlider.value;
+
+    iterationSlider.addEventListener('input', function () {
+        iterationValue.textContent = iterationSlider.value;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -87,8 +103,7 @@ async function collapseCanvas() {
 
     console.log('There are ' + paintedTiles.length + ' provided painted tiles');
 
-    const iterationSlider = document.getElementById('iterationSlider');
-    let iterations = Number(iterationSlider.value);
+    let iterations = Number(document.getElementById('iteration-slider').value);
 
     try {
         const response = await fetch('/generate', {
