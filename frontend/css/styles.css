@@ -60,9 +60,11 @@ body {
     top: 530px;
     left: 10px;
     z-index: 2;
-    /*display: flex;*/
     flex-direction: column;
     align-items: flex-end;
+    justify-content: space-evenly;
+    max-height: 250px;
+    height: 100%;
 }
 
 #tools-panel.tools-panel-visible {

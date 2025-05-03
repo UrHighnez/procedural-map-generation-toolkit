@@ -10,7 +10,7 @@
 
 <div id="toolbar">
     <button id="tools-btn">Tools</button>
-    <button id="collapse-btn">Collapse</button>
+    <button id="generate-btn">Generate</button>
     <button id="save-btn">Save</button>
     <button id="load-btn">Load</button>
 </div>
@@ -18,6 +18,10 @@
 <div id="tools-panel" class="hidden">
 
     <div>
+        <label>
+            <input type="checkbox" id="greyscale-checkbox" onchange="toggleGreyscale(this.checked)">
+            Greyscale
+        </label>
         <button id="paint-water" class="paint-btn" style="background-color: #0077be;">Water</button>
         <button id="paint-land" class="paint-btn" style="background-color: #d2b55b;">Land</button>
         <button id="paint-forest" class="paint-btn" style="background-color: #028A0F;">Forest</button>
@@ -34,8 +38,27 @@
         <label for="iteration-slider">
             Iterations: <span id="iteration-value"></span>
         </label>
-        <input type="range" min="1" max="10" value="8" class="slider" id="iteration-slider">
+        <input type="range" min="1" max="10" value="1" class="slider" id="iteration-slider">
     </div>
+
+    <div>
+        <label for="randomness-slider">
+            Randomness: <span id="randomness-value">1.00</span>
+        </label>
+        <input type="range" min="0" max="1" step="0.1" value="0" class="slider" id="randomness-slider">
+    </div>
+
+    <div>
+        <label for="generation-method">
+            Generation method:
+        </label>
+        <select id="generation-method">
+            <option value="wfc">Tile Collapse</option>
+            <option value="ca">Cellular Automata</option>
+            <option value="noise">Perlin Noise</option>
+        </select>
+    </div>
+
 
 </div>
 

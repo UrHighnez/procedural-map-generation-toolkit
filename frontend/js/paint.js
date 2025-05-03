@@ -1,8 +1,35 @@
 let paintColor = null;
+let isGreyscale = false;
+let originalImageData = null;
+
 
 window.setPaintColor = function (color) {
     paintColor = color;
 }
+
+window.toggleGreyscale = function (greyscaleOn) {
+    const canvas = document.getElementById('paint-canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (greyscaleOn) {
+        // Save image data (Only first time)
+        if (!originalImageData) {
+            originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        }
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            const avg = 0.299 * imgData.data[i] + 0.587 * imgData.data[i + 1] + 0.114 * imgData.data[i + 2];
+            imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = avg;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        isGreyscale = true;
+    } else if (originalImageData) {
+        // Recover original image data
+        ctx.putImageData(originalImageData, 0, 0);
+        isGreyscale = false;
+    }
+}
+
 
 function initPainting() {
     const canvas = document.getElementById('paint-canvas');

@@ -39,7 +39,7 @@ go run ./world-generation-wfc
 ```
 
 
-3. You can access the application under http://localhost:8080/ in a web browser to visualize the generated world.
+3. You can access the application under http://localhost:8000/ in a web browser to visualize the generated world.
 
 4. Use the provided paint tools in the web interface to paint landmasses with different colors.
 
