@@ -94,10 +94,9 @@ func countNeighbors(neighbors []Tile, targetState TileState) int {
 
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	dirs := []struct{ dx, dy int }{
-		{-1, 0},
-		{0, -1},
-		{0, 1},
-		{1, 0},
+		{-1, -1}, {-1, 0}, {-1, 1},
+		{0, -1}, {0, 1},
+		{1, -1}, {1, 0}, {1, 1},
 	}
 	var neighbors []Tile
 	for _, d := range dirs {
@@ -108,7 +107,6 @@ func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	}
 	return neighbors
 }
-
 func TilesToIntGrid(grid [][]Tile) [][]int {
 	res := make([][]int, len(grid))
 	for y := range grid {
@@ -120,13 +118,14 @@ func TilesToIntGrid(grid [][]Tile) [][]int {
 	return res
 }
 
+// Rules for Conway’s Game of Life
 func LifeRules() []Rule {
 	return []Rule{
-		// Alive cell stays alive
+		// Survive with 2 rr 3 living neighbors
 		{CurrentState: Alive, NeighborState: Alive, MinCount: 2, MaxCount: 3, TargetState: Alive},
-		// Dead cell turns alive
+		// Birth eith 3 living neighbors
 		{CurrentState: Dead, NeighborState: Alive, MinCount: 3, MaxCount: 3, TargetState: Alive},
-		// Cell dies or stays dead
+		// Under-/Overpopulation → DEATH
 		{CurrentState: AnyState, NeighborState: Alive, MinCount: 0, MaxCount: 1, TargetState: Dead},
 		{CurrentState: AnyState, NeighborState: Alive, MinCount: 4, MaxCount: -1, TargetState: Dead},
 	}

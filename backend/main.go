@@ -17,8 +17,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-var caGrid [][]ca.Tile
-
 func main() {
 	e := echo.New()
 
@@ -174,7 +172,7 @@ func generateTiles(c echo.Context) error {
 		return c.JSON(http.StatusOK, ca.TilesToIntGrid(nextGrid))
 
 	case "noise":
-		return echo.NewHTTPError(http.StatusNotImplemented, "NOISE NOT IMPLEMENTED YET")
+		return echo.NewHTTPError(http.StatusNotImplemented, "NOISE NOT IMPLEMENTED")
 
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "Unknown generation Method")
