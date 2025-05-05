@@ -40,11 +40,11 @@ function initButtons() {
     const randomnessValue = document.getElementById('randomness-value');
     let randomnessFactor = parseFloat(randomnessSlider.value);
 
-    randomnessValue.innerText = randomnessFactor.toFixed(2);
+    randomnessValue.innerText = randomnessFactor.toFixed(1);
 
     randomnessSlider.addEventListener('input', function () {
         randomnessFactor = parseFloat(randomnessSlider.value);
-        randomnessValue.innerText = randomnessFactor.toFixed(2);
+        randomnessValue.innerText = randomnessFactor.toFixed(1);
     });
 
     window.getRandomnessFactor = function () {
@@ -65,7 +65,7 @@ async function saveCanvas() {
     // Send the image data to the backend
     try {
         const response = await fetch('/save', {
-            generationMethod: 'POST',
+            method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({imageData}),
         });
