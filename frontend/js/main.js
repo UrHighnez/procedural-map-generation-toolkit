@@ -213,7 +213,7 @@ function getColor(imageData) {
             return 0;
         } else if (r === 16 && g === 133 && b === 188) {
             return 1;
-        } else if (r === 62 && g === 191 && b === 230) {
+        } else if (r === 62 && g === 179 && b === 230) {
             return 2;
         } else if (r === 181 && g === 151 && b === 82) {
             return 3;
@@ -248,7 +248,7 @@ function getPaintedTiles() {
             const color = getColor(imgData);
 
             if (color !== -1) {
-                // console.log(`Detected color ${color} at (${x}, ${y})`);
+                console.log(`Detected color ${color} at (${x}, ${y})`);
                 tiles[y][x] = color;
             }
         }

@@ -40,42 +40,53 @@ func (r TerrainRule) Condition(t Tile, neighbors []Tile, _ int, _ int, _ [][]Til
 }
 
 func CreateDefaultRules() []TerrainRule {
+	// Define land and water categories
 	landTypes := []TileColorType{Forest, Bushes, Grass, Sand, WetSand}
+	waterTypes := []TileColorType{DeepWater, Water, CoastalWater}
 
-	foliageRules := []TerrainRule{
-
-		// Downgrade Terrain
-
-		{Bushes, Grass, landTypes, -1, 2},
-		{Bushes, Grass, landTypes, 7, 8},
-		{Forest, Bushes, landTypes, -1, 2},
-		{Forest, Bushes, landTypes, 7, 8},
-
-		// Upgrade Terrain
-
-		{Grass, Bushes, landTypes, 3, 6},
-		{Bushes, Forest, landTypes, 3, 6},
+	// 1. Remove any foliage adjacent to water: convert forest and bushes into sand
+	coastalCleanup := []TerrainRule{
+		{Forest, Sand, waterTypes, 1, -1},
+		{Bushes, Sand, waterTypes, 1, -1},
 	}
 
+	// 2. Form beaches: grass becomes sand, sand becomes wet sand when next to water
+	beachRules := []TerrainRule{
+		{Grass, Sand, waterTypes, 1, -1},
+		{Sand, WetSand, waterTypes, 2, -1},
+	}
+
+	// 3. Standard terrain transitions (erosion and sediment buildup)
 	terrainRules := []TerrainRule{
-
-		// Downgrade Terrain
-
-		{Grass, Sand, landTypes, -1, 6},
-		{Sand, WetSand, landTypes, -1, 6},
+		// Downgrade toward water
 		{WetSand, CoastalWater, landTypes, -1, 4},
 		{CoastalWater, Water, landTypes, -1, 2},
 		{Water, DeepWater, landTypes, -1, 1},
-
-		// Upgrade Terrain
-
+		// Upgrade away from water
 		{DeepWater, Water, landTypes, 1, -1},
 		{Water, CoastalWater, landTypes, 2, -1},
 		{CoastalWater, WetSand, landTypes, 5, -1},
 		{WetSand, Sand, landTypes, 6, -1},
 		{Sand, Grass, landTypes, 7, -1},
 	}
-	return append(foliageRules, terrainRules...)
+
+	// 4. Vegetation changes only on main land (no water-adjacent foliage remains)
+	foliageRules := []TerrainRule{
+		// Downgrade vegetation in sparse or overly dense clusters
+		{Bushes, Grass, landTypes, -1, 2},
+		{Bushes, Grass, landTypes, 7, 8},
+		{Forest, Bushes, landTypes, -1, 2},
+		{Forest, Bushes, landTypes, 7, 8},
+		// Upgrade vegetation where sufficient land neighbors exist
+		{Grass, Bushes, landTypes, 3, 6},
+		{Bushes, Forest, landTypes, 3, 6},
+	}
+
+	// Combine in order: coastal cleanup → beaches → terrain → vegetation
+	rules := append(coastalCleanup, beachRules...)
+	rules = append(rules, terrainRules...)
+	rules = append(rules, foliageRules...)
+	return rules
 }
 
 func CountTilesByType(neighbors []Tile, types ...TileColorType) int {
@@ -116,19 +127,24 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType, iterations
 
 func initializeGrid(width, height int, paintedTiles [][]TileColorType) [][]Tile {
 	grid := make([][]Tile, height)
+	paintedTilesNum := 0
+	randomTilesNum := 0
 	for y := 0; y < height; y++ {
 		grid[y] = make([]Tile, width)
 		for x := 0; x < width; x++ {
 			if paintedTiles[y][x] != -1 {
 				grid[y][x] = Tile{Color: paintedTiles[y][x]}
-				log.Printf("Initialized painted tile at (%d, %d) with color %d", x, y, paintedTiles[y][x])
+				paintedTilesNum += 1
+				//log.Printf("Initialized painted tile at (%d, %d) with color %d", x, y, paintedTiles[y][x])
 			} else {
 				randomColor := TileColorType(rand.Intn(8))
 				grid[y][x] = Tile{Color: randomColor}
-				log.Printf("Initialized random tile at (%d, %d) with color %d", x, y, randomColor)
+				randomTilesNum += 1
+				//log.Printf("Initialized random tile at (%d, %d) with color %d", x, y, randomColor)
 			}
 		}
 	}
+	log.Printf("Initialized %d painted tiles and %d random tiles", paintedTilesNum, randomTilesNum)
 	return grid
 }
 
@@ -162,14 +178,9 @@ type coordinate struct {
 
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	coordinates := []coordinate{
-		{x - 1, y - 1},
-		{x - 1, y},
-		{x - 1, y + 1},
-		{x, y - 1},
-		{x, y + 1},
-		{x + 1, y - 1},
-		{x + 1, y},
-		{x + 1, y + 1},
+		{x - 1, y - 1}, {x - 1, y}, {x - 1, y + 1},
+		{x, y - 1}, {x, y + 1},
+		{x + 1, y - 1}, {x + 1, y}, {x + 1, y + 1},
 	}
 
 	var neighbors []Tile
