@@ -40,23 +40,24 @@ func (r TerrainRule) Condition(t Tile, neighbors []Tile, _ int, _ int, _ [][]Til
 }
 
 func CreateDefaultRules() []TerrainRule {
-	// Define land and water categories
-	landTypes := []TileColorType{Forest, Bushes, Grass, Sand, WetSand}
+	// Define water, land and foliage categories
 	waterTypes := []TileColorType{DeepWater, Water, CoastalWater}
+	landTypes := []TileColorType{Forest, Bushes, Grass, Sand, WetSand}
+	foliageTypes := []TileColorType{Forest, Bushes}
 
-	// 1. Remove any foliage adjacent to water: convert forest and bushes into sand
+	// Convert foliage adjacent to water into sand
 	coastalCleanup := []TerrainRule{
 		{Forest, Sand, waterTypes, 1, -1},
 		{Bushes, Sand, waterTypes, 1, -1},
 	}
 
-	// 2. Form beaches: grass becomes sand, sand becomes wet sand when next to water
+	// Convert grass into sand and sand into wet sand adjacent to water
 	beachRules := []TerrainRule{
 		{Grass, Sand, waterTypes, 1, -1},
 		{Sand, WetSand, waterTypes, 2, -1},
 	}
 
-	// 3. Standard terrain transitions (erosion and sediment buildup)
+	// Terrain transitions (erosion and sediment buildup)
 	terrainRules := []TerrainRule{
 		// Downgrade toward water
 		{WetSand, CoastalWater, landTypes, -1, 4},
@@ -70,16 +71,23 @@ func CreateDefaultRules() []TerrainRule {
 		{Sand, Grass, landTypes, 7, -1},
 	}
 
-	// 4. Vegetation changes only on main land (no water-adjacent foliage remains)
+	// Vegetation transitions
 	foliageRules := []TerrainRule{
-		// Downgrade vegetation in sparse or overly dense clusters
-		{Bushes, Grass, landTypes, -1, 2},
-		{Bushes, Grass, landTypes, 7, 8},
-		{Forest, Bushes, landTypes, -1, 2},
-		{Forest, Bushes, landTypes, 7, 8},
-		// Upgrade vegetation where sufficient land neighbors exist
-		{Grass, Bushes, landTypes, 3, 6},
-		{Bushes, Forest, landTypes, 3, 6},
+		// **Survival**
+		{Bushes, Bushes, foliageTypes, 3, 6},
+		// **Dying**
+		{Bushes, Grass, foliageTypes, -1, 2},
+		{Bushes, Grass, foliageTypes, 7, 8},
+		// **Birth**
+		{Grass, Bushes, foliageTypes, 3, 6},
+
+		// **Survival**
+		{Forest, Forest, foliageTypes, 2, 6},
+		// **Dying**
+		{Forest, Bushes, foliageTypes, -1, 1},
+		{Forest, Bushes, foliageTypes, 7, 8},
+		// **Birth**
+		{Bushes, Forest, foliageTypes, 2, 6},
 	}
 
 	// Combine in order: coastal cleanup → beaches → terrain → vegetation
