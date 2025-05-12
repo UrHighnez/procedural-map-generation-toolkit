@@ -11,8 +11,8 @@ const lifeProbability = 0.5
 
 const (
 	AnyState TileState = -1
-	Dead               = 0
-	Alive              = 4
+	Dead               = 4
+	Alive              = 7
 )
 
 type Tile struct {
@@ -121,9 +121,9 @@ func TilesToIntGrid(grid [][]Tile) [][]int {
 // Rules for Conway’s Game of Life
 func LifeRules() []Rule {
 	return []Rule{
-		// Survive with 2 rr 3 living neighbors
+		// Survive with 2 or 3 living neighbors
 		{CurrentState: Alive, NeighborState: Alive, MinCount: 2, MaxCount: 3, TargetState: Alive},
-		// Birth eith 3 living neighbors
+		// Birth with 3 living neighbors
 		{CurrentState: Dead, NeighborState: Alive, MinCount: 3, MaxCount: 3, TargetState: Alive},
 		// Under-/Overpopulation → DEATH
 		{CurrentState: AnyState, NeighborState: Alive, MinCount: 0, MaxCount: 1, TargetState: Dead},

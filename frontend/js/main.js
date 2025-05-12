@@ -141,7 +141,6 @@ async function generateCanvas() {
 
         if (response.ok) {
             const mapData = await response.json();
-            grid = mapData;
             console.log('Server response: ', mapData);
 
 
@@ -248,7 +247,7 @@ function getPaintedTiles() {
             const color = getColor(imgData);
 
             if (color !== -1) {
-                console.log(`Detected color ${color} at (${x}, ${y})`);
+                // console.log(`Detected color ${color} at (${x}, ${y})`);
                 tiles[y][x] = color;
             }
         }

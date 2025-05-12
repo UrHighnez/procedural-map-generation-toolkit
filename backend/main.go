@@ -154,9 +154,9 @@ func generateTiles(c echo.Context) error {
 		// Print painted cells
 		for y := 0; y < len(req.PaintedTiles) && y < len(tileGrid); y++ {
 			for x := 0; x < len(req.PaintedTiles[y]) && x < len(tileGrid[0]); x++ {
-				if req.PaintedTiles[y][x] == 4 {
+				if req.PaintedTiles[y][x] == ca.Alive {
 					tileGrid[y][x].State = ca.Alive
-				} else if req.PaintedTiles[y][x] == 0 {
+				} else if req.PaintedTiles[y][x] == ca.Dead {
 					tileGrid[y][x].State = ca.Dead
 				}
 			}
