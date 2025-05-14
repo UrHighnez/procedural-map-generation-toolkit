@@ -2,7 +2,10 @@ module DnD_Mapgenerator
 
 go 1.20
 
-require github.com/labstack/echo/v4 v4.10.2
+require (
+	github.com/aquilax/go-perlin v1.1.0
+	github.com/labstack/echo/v4 v4.10.2
+)
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

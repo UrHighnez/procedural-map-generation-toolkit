@@ -133,7 +133,14 @@ async function generateCanvas() {
                 prevGrid: grid,
                 paintedTiles: paintedTiles,
                 randomnessFactor: randomness,
+
+                noiseScale: 0.9,
+                noiseOctaves: 4,
+                noisePersistence: 0.9,
+                noiseLacunarity: 1.8,
+
                 iterations,
+
                 generationMethod: generationMethod
             }),
         });

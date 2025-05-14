@@ -2,7 +2,8 @@ package main
 
 import (
 	"DnD_Mapgenerator/backend/ca"
-	"DnD_Mapgenerator/backend/wfc"
+	"DnD_Mapgenerator/backend/mlca"
+	"DnD_Mapgenerator/backend/noise"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
@@ -94,6 +95,10 @@ type GenerateRequest struct {
 	RandomnessFactor float64 `json:"randomnessFactor"`
 	PrevGrid         [][]int `json:"prevGrid"`
 	PaintedTiles     [][]int `json:"paintedTiles"`
+	NoiseScale       float64 `json:"noiseScale"`
+	NoiseOctaves     int     `json:"noiseOctaves"`
+	NoisePersistence float64 `json:"noisePersistence"`
+	NoiseLacunarity  float64 `json:"noiseLacunarity"`
 }
 
 func generateTiles(c echo.Context) error {
@@ -104,21 +109,21 @@ func generateTiles(c echo.Context) error {
 
 	switch req.GenerationMethod {
 
-	case "wfc":
+	case "mlca":
 		// Create default rules
-		rules := wfc.CreateDefaultRules()
+		rules := mlca.CreateDefaultRules()
 
-		// Map paintedTiles ([][]int) to [][]wfc.TileColorType
-		painted := make([][]wfc.TileColorType, len(req.PaintedTiles))
+		// Map paintedTiles ([][]int) to [][]mlca.TileColorType
+		painted := make([][]mlca.TileColorType, len(req.PaintedTiles))
 		for y := range req.PaintedTiles {
-			painted[y] = make([]wfc.TileColorType, len(req.PaintedTiles[y]))
+			painted[y] = make([]mlca.TileColorType, len(req.PaintedTiles[y]))
 			for x, v := range req.PaintedTiles[y] {
-				painted[y][x] = wfc.TileColorType(v)
+				painted[y][x] = mlca.TileColorType(v)
 			}
 		}
 
 		// Call with the converted grid
-		grid, err := wfc.GenerateTiles(
+		grid, err := mlca.GenerateTiles(
 			req.Width,
 			req.Height,
 			painted,
@@ -132,6 +137,7 @@ func generateTiles(c echo.Context) error {
 				"error": "Tile generation failed",
 			})
 		}
+		// Output
 		return c.JSON(http.StatusOK, grid)
 
 	case "ca":
@@ -168,12 +174,35 @@ func generateTiles(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "CA generation failed: "+err.Error())
 		}
 
-		// Response
+		// Output
 		return c.JSON(http.StatusOK, ca.TilesToIntGrid(nextGrid))
 
 	case "noise":
-		return echo.NewHTTPError(http.StatusNotImplemented, "NOISE NOT IMPLEMENTED")
 
+		// Configure Noise-Generator
+		seed := int64(1)
+		ng := noise.NewNoiseGenerator(
+			seed,
+			req.NoiseScale,
+			req.NoiseOctaves,
+			req.NoisePersistence,
+			req.NoiseLacunarity,
+		)
+
+		// Generate map
+		tileGrid := ng.Generate(req.Width, req.Height)
+
+		// Convert to [][]int
+		out := make([][]int, req.Height)
+		for y := 0; y < req.Height; y++ {
+			out[y] = make([]int, req.Width)
+			for x := 0; x < req.Width; x++ {
+				out[y][x] = int(tileGrid[y][x].Color)
+			}
+		}
+
+		// Output
+		return c.JSON(http.StatusOK, out)
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "Unknown generation Method")
 	}

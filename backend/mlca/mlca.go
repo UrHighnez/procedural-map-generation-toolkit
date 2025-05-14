@@ -1,4 +1,4 @@
-package wfc
+package mlca
 
 import (
 	"errors"
