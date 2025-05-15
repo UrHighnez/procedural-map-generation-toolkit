@@ -4,6 +4,7 @@ import (
 	"DnD_Mapgenerator/backend/ca"
 	"DnD_Mapgenerator/backend/mlca"
 	"DnD_Mapgenerator/backend/noise"
+	"DnD_Mapgenerator/backend/wfc"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
@@ -203,6 +204,25 @@ func generateTiles(c echo.Context) error {
 
 		// Output
 		return c.JSON(http.StatusOK, out)
+
+	case "wfc":
+		// Generate WFC map
+		grid, err := wfc.RunWFC(req.Width, req.Height, req.Iterations)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		// Convert TileColorType to [][]int
+		out := make([][]int, len(grid))
+		for y := range grid {
+			out[y] = make([]int, len(grid[y]))
+			for x := range grid[y] {
+				out[y][x] = int(grid[y][x])
+			}
+		}
+
+		return c.JSON(http.StatusOK, out)
+
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "Unknown generation Method")
 	}
