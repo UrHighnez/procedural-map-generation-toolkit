@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-type TileColorType int
+type TileType int
 
 const (
-	DeepWater TileColorType = iota
+	DeepWater TileType = iota
 	Water
 	CoastalWater
 	WetSand
@@ -20,179 +20,232 @@ const (
 	NumTileTypes
 )
 
-// Rules: What tile-types can be adjacent
-var adjacencyRules = map[TileColorType][]TileColorType{
-	Forest:       {Forest, Bushes},
-	Bushes:       {Forest, Bushes, Grass},
-	Grass:        {Bushes, Grass, Sand},
-	Sand:         {Grass, Sand, WetSand},
-	WetSand:      {Sand, WetSand, CoastalWater},
-	CoastalWater: {WetSand, CoastalWater, Water},
-	Water:        {CoastalWater, Water, DeepWater},
-	DeepWater:    {Water, DeepWater},
+// adjacencyRules defines allowed neighbors for each tile.
+var adjacencyRules = map[TileType][]TileType{
+	DeepWater:    {DeepWater, Water, CoastalWater},
+	Water:        {DeepWater, Water, CoastalWater, WetSand},
+	CoastalWater: {DeepWater, Water, CoastalWater, WetSand, Sand},
+	WetSand:      {Water, CoastalWater, WetSand, Sand, Grass},
+	Sand:         {CoastalWater, WetSand, Sand, Grass, Bushes},
+	Grass:        {WetSand, Sand, Grass, Bushes, Forest},
+	Bushes:       {Sand, Grass, Bushes, Forest},
+	Forest:       {Grass, Bushes, Forest},
 }
 
-// Define cell
 type Cell struct {
-	Possible  map[TileColorType]struct{} // Set of possible tiles
-	Collapsed bool
-	Tile      TileColorType
+	options   map[TileType]struct{} // remaining possible tiles
+	tile      TileType              // collapsed tile
+	collapsed bool
 }
 
-// New wfc grid
-func NewGrid(width, height int) [][]*Cell {
-	grid := make([][]*Cell, height)
-	for y := range grid {
-		grid[y] = make([]*Cell, width)
-		for x := range grid[y] {
-			grid[y][x] = &Cell{
-				Possible:  makeAllTileSet(),
-				Collapsed: false,
+type Grid struct {
+	width, height int
+	cells         [][]*Cell
+}
+
+// NewGrid initializes a grid with all tiles possible in each cell.
+func NewGrid(w, h int) *Grid {
+	g := &Grid{width: w, height: h}
+	g.cells = make([][]*Cell, h)
+	for y := 0; y < h; y++ {
+		g.cells[y] = make([]*Cell, w)
+		for x := 0; x < w; x++ {
+			// all tile types initially allowed
+			opts := make(map[TileType]struct{}, NumTileTypes)
+			for t := TileType(0); t < NumTileTypes; t++ {
+				opts[t] = struct{}{}
 			}
+			g.cells[y][x] = &Cell{options: opts}
 		}
 	}
-	return grid
+	return g
 }
 
-// Helper function to make the tile set
-func makeAllTileSet() map[TileColorType]struct{} {
-	set := make(map[TileColorType]struct{})
-	for t := TileColorType(0); t < NumTileTypes; t++ {
-		set[t] = struct{}{}
-	}
-	return set
-}
+// Solve runs the WFC algorithm with a simple restart-on-conflict strategy.
+func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	waterSet := map[TileType]struct{}{DeepWater: {}, Water: {}, CoastalWater: {}}
 
-// Find the cell with the least uncertainty
-func findMinEntropyCell(grid [][]*Cell) (x, y int, found bool) {
-	minChoices := int(NumTileTypes) + 1
-	var minCells [][2]int
-	for row := range grid {
-		for col := range grid[row] {
-			cell := grid[row][col]
-			if cell.Collapsed {
-				continue
-			}
-			choices := len(cell.Possible)
-			if choices > 0 {
-				if choices < minChoices {
-					minChoices = choices
-					minCells = [][2]int{{col, row}}
-				} else if choices == minChoices {
-					minCells = append(minCells, [2]int{col, row})
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Cell Reset
+		for y := 0; y < g.height; y++ {
+			for x := 0; x < g.width; x++ {
+				g.cells[y][x].collapsed = false
+				g.cells[y][x].options = make(map[TileType]struct{}, NumTileTypes)
+				for t := TileType(0); t < NumTileTypes; t++ {
+					g.cells[y][x].options[t] = struct{}{}
 				}
 			}
 		}
-	}
-	if len(minCells) > 0 {
-		idx := rand.Intn(len(minCells))
-		x, y, found = minCells[idx][0], minCells[idx][1], true
-	}
-	return
-}
-
-// Collapse randomly
-func collapseCell(cell *Cell, rng *rand.Rand) {
-	n := len(cell.Possible)
-	ix := rng.Intn(n)
-	i := 0
-	for t := range cell.Possible {
-		if i == ix {
-			cell.Tile = t
-			cell.Possible = map[TileColorType]struct{}{t: {}}
-			cell.Collapsed = true
-			return
+		// Randomize Seed
+		for y := 0; y < g.height; y++ {
+			for x := 0; x < g.width; x++ {
+				if x == 0 || y == 0 || x == g.width-1 || y == g.height-1 {
+					opts := make(map[TileType]struct{}, len(waterSet))
+					for t := range waterSet {
+						opts[t] = struct{}{}
+					}
+					g.cells[y][x].options = opts
+				}
+			}
 		}
-		i++
+		// Collapse loop
+		ok := true
+		for {
+			x, y, found := g.findMinEntropy(rng)
+			if !found {
+				// Check for conflict
+				if g.anyCellHasNoOptions() {
+					ok = false
+				}
+				break
+			}
+			if err := g.collapse(x, y, rng); err != nil {
+				ok = false
+				break
+			}
+			if err := g.propagate(); err != nil {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return g.export(), nil
+		}
 	}
+	return nil, errors.New("WFC failed after retries")
 }
 
-// Iterate through the grid
-func RunWFC(width, height int, maxSteps int) ([][]TileColorType, error) {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	grid := NewGrid(width, height)
+// findMinEntropy picks a random cell with the fewest options (>1).
+func (g *Grid) findMinEntropy(rng *rand.Rand) (int, int, bool) {
+	minEntropy := NumTileTypes + 1
+	var candidates [][2]int
+	for y := 0; y < g.height; y++ {
+		for x := 0; x < g.width; x++ {
+			c := g.cells[y][x]
+			if c.collapsed {
+				continue
+			}
+			n := len(c.options)
+			if n == 0 {
+				return 0, 0, false // conflict
+			}
+			if n < int(minEntropy) {
+				minEntropy = TileType(n)
+				candidates = [][2]int{{x, y}}
+			} else if n == int(minEntropy) {
+				candidates = append(candidates, [2]int{x, y})
+			}
+		}
+	}
+	if len(candidates) == 0 {
+		return 0, 0, false
+	}
+	i := rng.Intn(len(candidates))
+	x, y := candidates[i][0], candidates[i][1]
+	return x, y, true
+}
 
-	for step := 0; step < width*height && step < maxSteps; step++ {
-		x, y, found := findMinEntropyCell(grid)
-		if !found {
-			// Everything collapsed, we're done
+// collapse chooses one option at random and marks the cell collapsed.
+func (g *Grid) collapse(x, y int, rng *rand.Rand) error {
+	c := g.cells[y][x]
+	n := len(c.options)
+	if n == 0 {
+		return errors.New("conflict at collapse")
+	}
+	i := rng.Intn(n)
+	var choice TileType
+	j := 0
+	for t := range c.options {
+		if j == i {
+			choice = t
 			break
 		}
-		cell := grid[y][x]
-		if len(cell.Possible) == 0 {
-			return nil, errors.New("WFC-Conflict: No possible tiles")
-		}
-		collapseCell(cell, rng)
-		propagate(grid, x, y)
+		j++
 	}
-
-	// Result
-	out := make([][]TileColorType, height)
-	for y := 0; y < height; y++ {
-		out[y] = make([]TileColorType, width)
-		for x := 0; x < width; x++ {
-			c := grid[y][x]
-			if !c.Collapsed {
-
-				// Take random value
-				for t := range c.Possible {
-					out[y][x] = t
-					break
-				}
-			} else {
-				out[y][x] = c.Tile
-			}
-		}
-	}
-	return out, nil
+	c.options = map[TileType]struct{}{choice: {}}
+	c.tile = choice
+	c.collapsed = true
+	return nil
 }
 
-func propagate(grid [][]*Cell, x, y int) {
-	width := len(grid[0])
-	height := len(grid)
-	queue := [][2]int{{x, y}}
-	for len(queue) > 0 {
-		cx, cy := queue[0][0], queue[0][1]
-		queue = queue[1:]
-		c := grid[cy][cx]
-
-		// **Important**: Only propagate if already collapsed
-		if !c.Collapsed {
-			continue
+// propagate enforces adjacency constraints across the grid.
+func (g *Grid) propagate() error {
+	queue := make([][2]int, 0)
+	// initialize with all collapsed cells
+	for y := 0; y < g.height; y++ {
+		for x := 0; x < g.width; x++ {
+			if g.cells[y][x].collapsed {
+				queue = append(queue, [2]int{x, y})
+			}
 		}
-
-		// Check neighbors and reduce possibilities
-		for _, d := range [][2]int{{0, -1}, {0, 1}, {-1, 0}, {1, 0}} {
-			nx, ny := cx+d[0], cy+d[1]
-			if nx < 0 || nx >= width || ny < 0 || ny >= height {
+	}
+	// BFS
+	dirs := [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	for len(queue) > 0 {
+		x, y := queue[0][0], queue[0][1]
+		queue = queue[1:]
+		//base := g.cells[y][x]
+		for _, d := range dirs {
+			nx, ny := x+d[0], y+d[1]
+			if nx < 0 || nx >= g.width || ny < 0 || ny >= g.height {
 				continue
 			}
-			neighbor := grid[ny][nx]
-			if neighbor.Collapsed {
-				continue
+			ne := g.cells[ny][nx]
+			// collect allowed by all collapsed neighbors
+			allowed := make(map[TileType]struct{})
+			for t := TileType(0); t < NumTileTypes; t++ {
+				allowed[t] = struct{}{}
 			}
-			before := len(neighbor.Possible)
-
-			// Allow neighbors based on adjacency rules
-			allowed := make(map[TileColorType]struct{})
-			for t := range neighbor.Possible {
-				for at := range adjacencyRules[c.Tile] {
-					if t == adjacencyRules[c.Tile][at] {
-						allowed[t] = struct{}{}
-						break
+			for _, d2 := range dirs {
+				x2, y2 := nx+d2[0], ny+d2[1]
+				if x2 < 0 || x2 >= g.width || y2 < 0 || y2 >= g.height {
+					continue
+				}
+				nbr := g.cells[y2][x2]
+				if !nbr.collapsed {
+					continue
+				}
+				tmp := make(map[TileType]struct{})
+				for _, t2 := range adjacencyRules[nbr.tile] {
+					if _, ok := allowed[t2]; ok {
+						tmp[t2] = struct{}{}
 					}
 				}
-				for _, neighborType := range adjacencyRules[c.Tile] {
-					if t == neighborType {
-						allowed[t] = struct{}{}
-						break
-					}
-				}
+				allowed = tmp
 			}
-			if len(allowed) < before {
-				neighbor.Possible = allowed
+			if len(allowed) == 0 {
+				return errors.New("propagation conflict")
+			}
+			// if filtered, update and enqueue
+			if len(allowed) < len(ne.options) {
+				ne.options = allowed
 				queue = append(queue, [2]int{nx, ny})
 			}
 		}
 	}
+	return nil
+}
+
+// export returns the final tile map once solved.
+func (g *Grid) export() [][]TileType {
+	out := make([][]TileType, g.height)
+	for y := 0; y < g.height; y++ {
+		out[y] = make([]TileType, g.width)
+		for x := 0; x < g.width; x++ {
+			out[y][x] = g.cells[y][x].tile
+		}
+	}
+	return out
+}
+
+func (g *Grid) anyCellHasNoOptions() bool {
+	for y := 0; y < g.height; y++ {
+		for x := 0; x < g.width; x++ {
+			if len(g.cells[y][x].options) == 0 {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -206,18 +206,21 @@ func generateTiles(c echo.Context) error {
 		return c.JSON(http.StatusOK, out)
 
 	case "wfc":
-		// Generate WFC map
-		grid, err := wfc.RunWFC(req.Width, req.Height, req.Iterations)
+		// Create a new grid
+		gridObj := wfc.NewGrid(req.Width, req.Height)
+
+		// Solve grid
+		tiles, err := gridObj.Solve(req.Iterations)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 
-		// Convert TileColorType to [][]int
-		out := make([][]int, len(grid))
-		for y := range grid {
-			out[y] = make([]int, len(grid[y]))
-			for x := range grid[y] {
-				out[y][x] = int(grid[y][x])
+		// Convert [][]wfc.TileType to [][]int
+		out := make([][]int, len(tiles))
+		for y := range tiles {
+			out[y] = make([]int, len(tiles[y]))
+			for x := range tiles[y] {
+				out[y][x] = int(tiles[y][x])
 			}
 		}
 

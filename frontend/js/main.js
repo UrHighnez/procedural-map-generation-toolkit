@@ -134,7 +134,7 @@ async function generateCanvas() {
                 paintedTiles: paintedTiles,
                 randomnessFactor: randomness,
 
-                noiseScale: 0.9,
+                noiseScale: 0.5,
                 noiseOctaves: 4,
                 noisePersistence: 0.9,
                 noiseLacunarity: 1.8,
