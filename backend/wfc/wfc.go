@@ -22,19 +22,19 @@ const (
 
 // Rules: What tile-types can be adjacent
 var adjacencyRules = map[TileColorType][]TileColorType{
-	Forest:       {Bushes, Forest},
-	Bushes:       {Sand, Grass, Bushes, Forest},
-	Grass:        {WetSand, Sand, Grass, Bushes, Forest},
-	Sand:         {CoastalWater, WetSand, Sand, Grass, Bushes},
-	WetSand:      {Water, CoastalWater, WetSand, Sand, Grass},
-	CoastalWater: {DeepWater, Water, CoastalWater, WetSand, Sand},
-	Water:        {DeepWater, Water, CoastalWater},
-	DeepWater:    {DeepWater, Water, CoastalWater},
+	Forest:       {Forest, Bushes},
+	Bushes:       {Forest, Bushes, Grass},
+	Grass:        {Bushes, Grass, Sand},
+	Sand:         {Grass, Sand, WetSand},
+	WetSand:      {Sand, WetSand, CoastalWater},
+	CoastalWater: {WetSand, CoastalWater, Water},
+	Water:        {CoastalWater, Water, DeepWater},
+	DeepWater:    {Water, DeepWater},
 }
 
 // Define cell
 type Cell struct {
-	Possible  map[TileColorType]struct{} // Set von möglichen Tiles
+	Possible  map[TileColorType]struct{} // Set of possible tiles
 	Collapsed bool
 	Tile      TileColorType
 }
@@ -66,7 +66,7 @@ func makeAllTileSet() map[TileColorType]struct{} {
 // Find the cell with the least uncertainty
 func findMinEntropyCell(grid [][]*Cell) (x, y int, found bool) {
 	minChoices := int(NumTileTypes) + 1
-	minCells := [][2]int{}
+	var minCells [][2]int
 	for row := range grid {
 		for col := range grid[row] {
 			cell := grid[row][col]
@@ -115,16 +115,17 @@ func RunWFC(width, height int, maxSteps int) ([][]TileColorType, error) {
 	for step := 0; step < width*height && step < maxSteps; step++ {
 		x, y, found := findMinEntropyCell(grid)
 		if !found {
-			// Alles kollabiert
+			// Everything collapsed, we're done
 			break
 		}
 		cell := grid[y][x]
 		if len(cell.Possible) == 0 {
-			return nil, errors.New("WFC-Konflikt: Keine Tiles möglich")
+			return nil, errors.New("WFC-Conflict: No possible tiles")
 		}
 		collapseCell(cell, rng)
 		propagate(grid, x, y)
 	}
+
 	// Result
 	out := make([][]TileColorType, height)
 	for y := 0; y < height; y++ {
@@ -132,6 +133,7 @@ func RunWFC(width, height int, maxSteps int) ([][]TileColorType, error) {
 		for x := 0; x < width; x++ {
 			c := grid[y][x]
 			if !c.Collapsed {
+
 				// Take random value
 				for t := range c.Possible {
 					out[y][x] = t
@@ -153,6 +155,12 @@ func propagate(grid [][]*Cell, x, y int) {
 		cx, cy := queue[0][0], queue[0][1]
 		queue = queue[1:]
 		c := grid[cy][cx]
+
+		// **Important**: Only propagate if already collapsed
+		if !c.Collapsed {
+			continue
+		}
+
 		// Check neighbors and reduce possibilities
 		for _, d := range [][2]int{{0, -1}, {0, 1}, {-1, 0}, {1, 0}} {
 			nx, ny := cx+d[0], cy+d[1]
@@ -164,11 +172,18 @@ func propagate(grid [][]*Cell, x, y int) {
 				continue
 			}
 			before := len(neighbor.Possible)
+
 			// Allow neighbors based on adjacency rules
 			allowed := make(map[TileColorType]struct{})
 			for t := range neighbor.Possible {
 				for at := range adjacencyRules[c.Tile] {
 					if t == adjacencyRules[c.Tile][at] {
+						allowed[t] = struct{}{}
+						break
+					}
+				}
+				for _, neighborType := range adjacencyRules[c.Tile] {
+					if t == neighborType {
 						allowed[t] = struct{}{}
 						break
 					}
