@@ -3,7 +3,7 @@ package wfc
 import (
 	"errors"
 	"math/rand"
-	"time"
+	"sort"
 )
 
 type TileType int
@@ -63,8 +63,17 @@ func NewGrid(w, h int) *Grid {
 
 // Solve runs the WFC algorithm with a simple restart-on-conflict strategy.
 func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	const fixedSeed = 1
+	rng := rand.New(rand.NewSource(fixedSeed))
+
+	// Define water types
 	waterSet := map[TileType]struct{}{DeepWater: {}, Water: {}, CoastalWater: {}}
+
+	// Define land types
+	landSet := map[TileType]struct{}{
+		Sand: {}, Grass: {}, Bushes: {}, Forest: {},
+	}
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		// Cell Reset
@@ -77,7 +86,7 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 				}
 			}
 		}
-		// Randomize Seed
+		// Set water on the border
 		for y := 0; y < g.height; y++ {
 			for x := 0; x < g.width; x++ {
 				if x == 0 || y == 0 || x == g.width-1 || y == g.height-1 {
@@ -86,6 +95,35 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 						opts[t] = struct{}{}
 					}
 					g.cells[y][x].options = opts
+				}
+			}
+		}
+		// Set a land circle in the center
+		centerX, centerY := g.width/2, g.height/2
+		const r = 3
+		r2 := r * r
+		for y := centerY - r; y <= centerY+r; y++ {
+			if y < 0 || y >= g.height {
+				continue
+			}
+			dy := y - centerY
+			for x := centerX - r; x <= centerX+r; x++ {
+				if x < 0 || x >= g.width {
+					continue
+				}
+				dx := x - centerX
+				if dx*dx+dy*dy <= r2 {
+					opts := make(map[TileType]struct{}, len(landSet))
+					for t := range landSet {
+						opts[t] = struct{}{}
+					}
+					g.cells[y][x].options = opts
+					// Collapse center
+					//if dx == 0 && dy == 0 {
+					//	choice := Forest
+					//	g.cells[y][x].tile = choice
+					//	g.cells[y][x].collapsed = true
+					//}
 				}
 			}
 		}
@@ -146,23 +184,26 @@ func (g *Grid) findMinEntropy(rng *rand.Rand) (int, int, bool) {
 	return x, y, true
 }
 
-// collapse chooses one option at random and marks the cell collapsed.
+// collapse chooses one deterministic option and marks the cell collapsed.
 func (g *Grid) collapse(x, y int, rng *rand.Rand) error {
 	c := g.cells[y][x]
 	n := len(c.options)
 	if n == 0 {
 		return errors.New("conflict at collapse")
 	}
-	i := rng.Intn(n)
-	var choice TileType
-	j := 0
+
+	// Collect keys
+	opts := make([]TileType, 0, n)
 	for t := range c.options {
-		if j == i {
-			choice = t
-			break
-		}
-		j++
+		opts = append(opts, t)
 	}
+	// Sort keys deterministically
+	sort.Slice(opts, func(i, j int) bool { return opts[i] < opts[j] })
+
+	// Create index via rng
+	choice := opts[rng.Intn(n)]
+
+	// Collapse cell
 	c.options = map[TileType]struct{}{choice: {}}
 	c.tile = choice
 	c.collapsed = true
