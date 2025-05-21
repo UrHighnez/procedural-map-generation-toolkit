@@ -141,7 +141,7 @@ func generateTiles(c echo.Context) error {
 		// Output
 		return c.JSON(http.StatusOK, grid)
 
-	case "ca":
+	case "gol":
 		// Reconstruct grid from prevGrid or create new
 		var tileGrid [][]ca.Tile
 		if len(req.PrevGrid) > 0 {
@@ -210,7 +210,7 @@ func generateTiles(c echo.Context) error {
 		gridObj := wfc.NewGrid(req.Width, req.Height)
 
 		// Solve grid
-		tiles, err := gridObj.Solve(req.Iterations)
+		tiles, err := gridObj.Solve(100)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
