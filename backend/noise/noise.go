@@ -1,9 +1,9 @@
 package noise
 
 import (
-	"DnD_Mapgenerator/backend/mlca"
 	"github.com/aquilax/go-perlin"
 	"log"
+	"procedural-map-generation-toolkit/backend/mlca"
 )
 
 // Generator generates a map based on Perlin-Noise

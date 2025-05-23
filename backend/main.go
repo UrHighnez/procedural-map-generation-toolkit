@@ -1,11 +1,6 @@
 package main
 
 import (
-	"DnD_Mapgenerator/backend/gol"
-	"DnD_Mapgenerator/backend/metrics"
-	"DnD_Mapgenerator/backend/mlca"
-	"DnD_Mapgenerator/backend/noise"
-	"DnD_Mapgenerator/backend/wfc"
 	"encoding/base64"
 	"fmt"
 	"io/fs"
@@ -13,6 +8,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"procedural-map-generation-toolkit/backend/gol"
+	"procedural-map-generation-toolkit/backend/metrics"
+	"procedural-map-generation-toolkit/backend/mlca"
+	"procedural-map-generation-toolkit/backend/noise"
+	"procedural-map-generation-toolkit/backend/wfc"
 	"strings"
 	"time"
 
