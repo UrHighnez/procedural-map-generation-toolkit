@@ -1,64 +1,104 @@
-# World Generation with WFC
+# Procedural Map Generation Toolkit
 
 ## Description
-This project implements a world generation algorithm using the Wave Function Collapse (WFC) technique. It allows you to generate and visualize 2D worlds with different tile colors, including land, coastal water, water, and grass.
-Additionally, it provides the following features:
 
-Interactive Painting: Users can paint the map with different tile colors to customize the world's layout according to their preferences.
+This project provides a modular toolkit for the procedural generation of 2D tile-based maps. It supports multiple algorithms and automatically computes metrics to evaluate the generated worlds.
 
-Map Loading and Saving: The application supports loading and saving maps as images, allowing users to preserve and share their generated worlds.
+### Supported Algorithms
+
+* **Multi-Layered Cellular Automata (MLCA)**
+* **Discrete Perlin Noise**
+* **Wave Function Collapse (WFC)**
+
+### Computed Metrics
+
+* **Tile Entropy** (information content)
+* **Adjacency Matrix** (neighbor distributions)
+* **Cluster Sizes** (connected regions)
+* **Tile Type Frequencies**
+* **Fractal Dimension** *(planned)*
+* **Spectral Analysis** *(planned)*
+* **Pattern Repetition** *(planned)*
+* **Gradient Distribution** *(planned)*
+
+### Features
+
+* **Interactive Painting:** Paint individual tiles in the browser canvas
+* **Map Save/Load:** Export and import maps as PNG files
+* **Real-time Metrics Display:** Entropy, cluster sizes, adjacency, and frequencies
+
+## Architecture
+
+* **Backend (Go):** Echo web server with endpoints:
+
+    * `/generate` generates maps via selected algorithm
+    * `/save` saves canvas as PNG
+    * `/load` lists and loads saved maps
+      Modules: `ca`, `mlca`, `noise`, `wfc`, `metrics`
+* **Frontend (JavaScript/HTML/CSS):**
+
+    * HTML5 Canvas for rendering
+    * UI controls for algorithm selection, parameters, painting tools
+    * Display panel for computed metrics
 
 ## Installation
-1. Clone the repository:
 
-```
-git clone https://github.com/your-username/world-generation-wfc.git</code>
-```
+```bash
+# Clone repository
+git clone https://github.com/UrHighnez/procedural-map-generation-toolkit.git
+cd world-generation-toolkit
 
-2. Install the necessary dependencies:
-
-```
-cd world-generation-wfc
-go get
-```
-
-
-3. Build the project:
-
-```
-go build
+# Download dependencies
+go mod download
 ```
 
 ## Usage
-1. Customize the parameters for generating the map in the `wfc.go` file.
 
-2. Run the program:
+1. **Start server**
 
-```
-go run ./world-generation-wfc
-```
+   ```bash
+   go run .\backend\main.go
+   ```
 
+   The server listens on port 8000 by default.
 
-3. You can access the application under http://localhost:8000/ in a web browser to visualize the generated world.
+2. **Open browser**
+   Navigate to [http://localhost:8000](http://localhost:8000) to access the UI.
 
-4. Use the provided paint tools in the web interface to paint landmasses with different colors.
+3. **Configure parameters**
 
-## Support
-If you encounter any issues or have questions, please feel free to open an issue on the [GitHub repository](https://github.com/your-username/world-generation-wfc/issues).
+    * Choose generation method
+    * Set iterations, randomness, and noise parameters
+
+4. **Generate map**
+   Click “Generate” to render a new map on the canvas.
+
+5. **Paint tiles**
+   Use the brush tools to customize tile colors.
+
+6. **View metrics**
+   The panel below the canvas shows entropy, cluster sizes, adjacency, and tile frequencies.
+
+7. **Save map**
+   Click “Save” to export the current canvas as a PNG in the `saved_maps` folder.
+
+8. **Load map**
+   Click “Load” to choose and import a previously saved map.
+
+## Development & Testing
+
+* **Format code**: `go fmt ./...`
+* **Lint**: `golangci-lint run`
+* **Tests**: (unit tests for metrics modules pending)
 
 ## Contributing
-Contributions are welcome! If you would like to contribute to this project, please follow these steps:
 
 1. Fork the repository.
-
-2. Create a new branch for your feature or bug fix.
-
-3. Make your changes and commit them.
-
-4. Push the changes to your fork.
-
-5. Submit a pull request describing your changes.
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Implement your changes and add tests.
+4. Commit and push to your fork.
+5. Open a Pull Request describing your changes.
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
