@@ -3,31 +3,28 @@ package gol
 import (
 	"errors"
 	"math/rand"
+	"procedural-map-generation-toolkit/backend/tiles"
 )
-
-type TileState int
 
 const lifeProbability = 0.5
 
-const (
-	AnyState TileState = -1
-	Dead               = 4
-	Alive              = 7
-)
+const alive = tiles.Bushes
+const dead = tiles.Sand
+const anyState = -1
 
 type Tile struct {
-	State TileState
+	State tiles.TileType
 }
 
 type Rule struct {
-	CurrentState       TileState
-	TargetState        TileState
-	NeighborState      TileState
+	CurrentState       tiles.TileType
+	TargetState        tiles.TileType
+	NeighborState      tiles.TileType
 	MinCount, MaxCount int
 }
 
 func (r Rule) Applies(t Tile, neighbors []Tile) bool {
-	if r.CurrentState != AnyState && t.State != r.CurrentState {
+	if r.CurrentState != anyState && t.State != r.CurrentState {
 		return false
 	}
 	count := countNeighbors(neighbors, r.NeighborState)
@@ -40,9 +37,13 @@ func InitializeGrid(width, height int) [][]Tile {
 		grid[y] = make([]Tile, width)
 		for x := 0; x < width; x++ {
 			if rand.Float64() < lifeProbability {
-				grid[y][x] = Tile{State: Alive}
+
+				// Cell Alive
+				grid[y][x] = Tile{State: alive}
 			} else {
-				grid[y][x] = Tile{State: Dead}
+
+				// Cell Dead
+				grid[y][x] = Tile{State: dead}
 			}
 		}
 	}
@@ -82,7 +83,7 @@ func ApplyCARules(grid [][]Tile, rules []Rule, iterations int) ([][]Tile, error)
 	return grid, nil
 }
 
-func countNeighbors(neighbors []Tile, targetState TileState) int {
+func countNeighbors(neighbors []Tile, targetState tiles.TileType) int {
 	count := 0
 	for _, n := range neighbors {
 		if n.State == targetState {
@@ -121,13 +122,14 @@ func TilesToIntGrid(grid [][]Tile) [][]int {
 // Rules for Conway’s Game of Life
 func LifeRules() []Rule {
 	return []Rule{
+
 		// Survive with 2 or 3 living neighbors
-		{CurrentState: Alive, NeighborState: Alive, MinCount: 2, MaxCount: 3, TargetState: Alive},
+		{CurrentState: alive, NeighborState: alive, MinCount: 2, MaxCount: 3, TargetState: alive},
 		// Birth with 3 living neighbors
-		{CurrentState: Dead, NeighborState: Alive, MinCount: 3, MaxCount: 3, TargetState: Alive},
+		{CurrentState: dead, NeighborState: alive, MinCount: 3, MaxCount: 3, TargetState: alive},
 		// Under-/Overpopulation → DEATH
-		{CurrentState: AnyState, NeighborState: Alive, MinCount: 0, MaxCount: 1, TargetState: Dead},
-		{CurrentState: AnyState, NeighborState: Alive, MinCount: 4, MaxCount: -1, TargetState: Dead},
+		{CurrentState: anyState, NeighborState: alive, MinCount: 0, MaxCount: 1, TargetState: dead},
+		{CurrentState: anyState, NeighborState: alive, MinCount: 4, MaxCount: -1, TargetState: dead},
 	}
 }
 

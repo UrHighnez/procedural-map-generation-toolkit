@@ -12,6 +12,7 @@ import (
 	"procedural-map-generation-toolkit/backend/metrics"
 	"procedural-map-generation-toolkit/backend/mlca"
 	"procedural-map-generation-toolkit/backend/noise"
+	"procedural-map-generation-toolkit/backend/tiles"
 	"procedural-map-generation-toolkit/backend/wfc"
 	"strings"
 	"time"
@@ -124,11 +125,11 @@ func generateTiles(c echo.Context) error {
 		rules := mlca.CreateDefaultRules()
 
 		// Map paintedTiles ([][]int) to [][]mlca.TileColorType
-		painted := make([][]mlca.TileColorType, len(req.PaintedTiles))
+		painted := make([][]tiles.TileType, len(req.PaintedTiles))
 		for y := range req.PaintedTiles {
-			painted[y] = make([]mlca.TileColorType, len(req.PaintedTiles[y]))
+			painted[y] = make([]tiles.TileType, len(req.PaintedTiles[y]))
 			for x, v := range req.PaintedTiles[y] {
-				painted[y][x] = mlca.TileColorType(v)
+				painted[y][x] = tiles.TileType(v)
 			}
 		}
 
@@ -260,7 +261,7 @@ func generateTiles(c echo.Context) error {
 			for y := 0; y < req.Height; y++ {
 				tileGrid[y] = make([]gol.Tile, req.Width)
 				for x := 0; x < req.Width; x++ {
-					tileGrid[y][x].State = gol.TileState(req.PrevGrid[y][x])
+					tileGrid[y][x].State = tiles.TileType(req.PrevGrid[y][x])
 				}
 			}
 		} else {
@@ -271,10 +272,10 @@ func generateTiles(c echo.Context) error {
 		// Print painted cells
 		for y := 0; y < len(req.PaintedTiles) && y < len(tileGrid); y++ {
 			for x := 0; x < len(req.PaintedTiles[y]) && x < len(tileGrid[0]); x++ {
-				if req.PaintedTiles[y][x] == gol.Alive {
-					tileGrid[y][x].State = gol.Alive
-				} else if req.PaintedTiles[y][x] == gol.Dead {
-					tileGrid[y][x].State = gol.Dead
+				if req.PaintedTiles[y][x] == int(tiles.Bushes) {
+					tileGrid[y][x].State = tiles.Bushes
+				} else if req.PaintedTiles[y][x] == int(tiles.Sand) {
+					tileGrid[y][x].State = tiles.Sand
 				}
 			}
 		}

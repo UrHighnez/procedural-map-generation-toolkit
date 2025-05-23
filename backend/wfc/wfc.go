@@ -3,38 +3,25 @@ package wfc
 import (
 	"errors"
 	"math/rand"
+	"procedural-map-generation-toolkit/backend/tiles"
 	"sort"
 )
 
-type TileType int
-
-const (
-	DeepWater TileType = iota
-	Water
-	CoastalWater
-	WetSand
-	Sand
-	Grass
-	Bushes
-	Forest
-	NumTileTypes
-)
-
 // adjacencyRules defines allowed neighbors for each tile.
-var adjacencyRules = map[TileType][]TileType{
-	DeepWater:    {DeepWater, Water, CoastalWater},
-	Water:        {DeepWater, Water, CoastalWater, WetSand},
-	CoastalWater: {DeepWater, Water, CoastalWater, WetSand, Sand},
-	WetSand:      {Water, CoastalWater, WetSand, Sand, Grass},
-	Sand:         {CoastalWater, WetSand, Sand, Grass, Bushes},
-	Grass:        {WetSand, Sand, Grass, Bushes, Forest},
-	Bushes:       {Sand, Grass, Bushes, Forest},
-	Forest:       {Grass, Bushes, Forest},
+var adjacencyRules = map[tiles.TileType][]tiles.TileType{
+	tiles.DeepWater:    {tiles.DeepWater, tiles.Water, tiles.CoastalWater},
+	tiles.Water:        {tiles.DeepWater, tiles.Water, tiles.CoastalWater, tiles.WetSand},
+	tiles.CoastalWater: {tiles.DeepWater, tiles.Water, tiles.CoastalWater, tiles.WetSand, tiles.Sand},
+	tiles.WetSand:      {tiles.Water, tiles.CoastalWater, tiles.WetSand, tiles.Sand, tiles.Grass},
+	tiles.Sand:         {tiles.CoastalWater, tiles.WetSand, tiles.Sand, tiles.Grass, tiles.Bushes},
+	tiles.Grass:        {tiles.WetSand, tiles.Sand, tiles.Grass, tiles.Bushes, tiles.Forest},
+	tiles.Bushes:       {tiles.Sand, tiles.Grass, tiles.Bushes, tiles.Forest},
+	tiles.Forest:       {tiles.Grass, tiles.Bushes, tiles.Forest},
 }
 
 type Cell struct {
-	options   map[TileType]struct{} // remaining possible tiles
-	tile      TileType              // collapsed tile
+	options   map[tiles.TileType]struct{} // remaining possible tiles
+	tile      tiles.TileType              // collapsed tile
 	collapsed bool
 }
 
@@ -51,8 +38,8 @@ func NewGrid(w, h int) *Grid {
 		g.cells[y] = make([]*Cell, w)
 		for x := 0; x < w; x++ {
 			// all tile types initially allowed
-			opts := make(map[TileType]struct{}, NumTileTypes)
-			for t := TileType(0); t < NumTileTypes; t++ {
+			opts := make(map[tiles.TileType]struct{}, tiles.NumTileTypes)
+			for t := tiles.TileType(0); t < tiles.NumTileTypes; t++ {
 				opts[t] = struct{}{}
 			}
 			g.cells[y][x] = &Cell{options: opts}
@@ -62,17 +49,17 @@ func NewGrid(w, h int) *Grid {
 }
 
 // Solve runs the WFC algorithm with a simple restart-on-conflict strategy.
-func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
+func (g *Grid) Solve(maxRetries int) ([][]tiles.TileType, error) {
 
 	const fixedSeed = 6
 	rng := rand.New(rand.NewSource(fixedSeed))
 
 	// Define water types
-	waterSet := map[TileType]struct{}{DeepWater: {}, Water: {}, CoastalWater: {}}
+	waterSet := map[tiles.TileType]struct{}{tiles.DeepWater: {}, tiles.Water: {}, tiles.CoastalWater: {}}
 
 	// Define land types
-	landSet := map[TileType]struct{}{
-		Sand: {}, Grass: {}, Bushes: {}, Forest: {},
+	landSet := map[tiles.TileType]struct{}{
+		tiles.Sand: {}, tiles.Grass: {}, tiles.Bushes: {}, tiles.Forest: {},
 	}
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
@@ -80,8 +67,8 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 		for y := 0; y < g.height; y++ {
 			for x := 0; x < g.width; x++ {
 				g.cells[y][x].collapsed = false
-				g.cells[y][x].options = make(map[TileType]struct{}, NumTileTypes)
-				for t := TileType(0); t < NumTileTypes; t++ {
+				g.cells[y][x].options = make(map[tiles.TileType]struct{}, tiles.NumTileTypes)
+				for t := tiles.TileType(0); t < tiles.NumTileTypes; t++ {
 					g.cells[y][x].options[t] = struct{}{}
 				}
 			}
@@ -90,7 +77,7 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 		for y := 0; y < g.height; y++ {
 			for x := 0; x < g.width; x++ {
 				if x == 0 || y == 0 || x == g.width-1 || y == g.height-1 {
-					opts := make(map[TileType]struct{}, len(waterSet))
+					opts := make(map[tiles.TileType]struct{}, len(waterSet))
 					for t := range waterSet {
 						opts[t] = struct{}{}
 					}
@@ -113,7 +100,7 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 				}
 				dx := x - centerX
 				if dx*dx+dy*dy <= r2 {
-					opts := make(map[TileType]struct{}, len(landSet))
+					opts := make(map[tiles.TileType]struct{}, len(landSet))
 					for t := range landSet {
 						opts[t] = struct{}{}
 					}
@@ -156,7 +143,7 @@ func (g *Grid) Solve(maxRetries int) ([][]TileType, error) {
 
 // findMinEntropy picks a random cell with the fewest options (>1).
 func (g *Grid) findMinEntropy(rng *rand.Rand) (int, int, bool) {
-	minEntropy := NumTileTypes + 1
+	minEntropy := tiles.NumTileTypes + 1
 	var candidates [][2]int
 	for y := 0; y < g.height; y++ {
 		for x := 0; x < g.width; x++ {
@@ -169,7 +156,7 @@ func (g *Grid) findMinEntropy(rng *rand.Rand) (int, int, bool) {
 				return 0, 0, false // conflict
 			}
 			if n < int(minEntropy) {
-				minEntropy = TileType(n)
+				minEntropy = tiles.TileType(n)
 				candidates = [][2]int{{x, y}}
 			} else if n == int(minEntropy) {
 				candidates = append(candidates, [2]int{x, y})
@@ -193,7 +180,7 @@ func (g *Grid) collapse(x, y int, rng *rand.Rand) error {
 	}
 
 	// Collect keys
-	opts := make([]TileType, 0, n)
+	opts := make([]tiles.TileType, 0, n)
 	for t := range c.options {
 		opts = append(opts, t)
 	}
@@ -204,7 +191,7 @@ func (g *Grid) collapse(x, y int, rng *rand.Rand) error {
 	choice := opts[rng.Intn(n)]
 
 	// Collapse cell
-	c.options = map[TileType]struct{}{choice: {}}
+	c.options = map[tiles.TileType]struct{}{choice: {}}
 	c.tile = choice
 	c.collapsed = true
 	return nil
@@ -234,8 +221,8 @@ func (g *Grid) propagate() error {
 			}
 			ne := g.cells[ny][nx]
 			// collect allowed by all collapsed neighbors
-			allowed := make(map[TileType]struct{})
-			for t := TileType(0); t < NumTileTypes; t++ {
+			allowed := make(map[tiles.TileType]struct{})
+			for t := tiles.TileType(0); t < tiles.NumTileTypes; t++ {
 				allowed[t] = struct{}{}
 			}
 			for _, d2 := range dirs {
@@ -247,7 +234,7 @@ func (g *Grid) propagate() error {
 				if !nbr.collapsed {
 					continue
 				}
-				tmp := make(map[TileType]struct{})
+				tmp := make(map[tiles.TileType]struct{})
 				for _, t2 := range adjacencyRules[nbr.tile] {
 					if _, ok := allowed[t2]; ok {
 						tmp[t2] = struct{}{}
@@ -269,10 +256,10 @@ func (g *Grid) propagate() error {
 }
 
 // export returns the final tile map once solved.
-func (g *Grid) export() [][]TileType {
-	out := make([][]TileType, g.height)
+func (g *Grid) export() [][]tiles.TileType {
+	out := make([][]tiles.TileType, g.height)
 	for y := 0; y < g.height; y++ {
-		out[y] = make([]TileType, g.width)
+		out[y] = make([]tiles.TileType, g.width)
 		for x := 0; x < g.width; x++ {
 			out[y][x] = g.cells[y][x].tile
 		}

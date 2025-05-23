@@ -4,6 +4,7 @@ import (
 	"github.com/aquilax/go-perlin"
 	"log"
 	"procedural-map-generation-toolkit/backend/mlca"
+	"procedural-map-generation-toolkit/backend/tiles"
 )
 
 // Generator generates a map based on Perlin-Noise
@@ -14,8 +15,8 @@ type Generator struct {
 	Persistence float64 // Amplitude-degen per octave
 	Lacunarity  float64 // Frequency-Multiplication per octave
 	thresholds  []struct {
-		Max   float64            // Upper limit of normalized noise-value
-		Color mlca.TileColorType // Assign to TileColorType
+		Max   float64        // Upper limit of normalized noise-value
+		Color tiles.TileType // Assign to TileColorType
 	}
 }
 
@@ -32,16 +33,16 @@ func NewNoiseGenerator(seed int64, scale float64, octaves int, persistence, lacu
 	// Define Thresholds for conversion of noise-values to tile-colors
 	thresholds := []struct {
 		Max   float64
-		Color mlca.TileColorType
+		Color tiles.TileType
 	}{
-		{0.2, mlca.DeepWater},
-		{0.4, mlca.Water},
-		{0.5, mlca.CoastalWater},
-		{0.55, mlca.WetSand},
-		{0.6, mlca.Sand},
-		{0.7, mlca.Grass},
-		{0.8, mlca.Bushes},
-		{1.0, mlca.Forest},
+		{0.2, tiles.DeepWater},
+		{0.4, tiles.Water},
+		{0.5, tiles.CoastalWater},
+		{0.55, tiles.WetSand},
+		{0.6, tiles.Sand},
+		{0.7, tiles.Grass},
+		{0.8, tiles.Bushes},
+		{1.0, tiles.Forest},
 	}
 
 	return &Generator{
@@ -100,11 +101,11 @@ func (ng *Generator) Generate(width, height int) [][]mlca.Tile {
 }
 
 // mapValueToColor maps a normalized noise-value to a tile-color
-func (ng *Generator) mapValueToColor(val float64) mlca.TileColorType {
+func (ng *Generator) mapValueToColor(val float64) tiles.TileType {
 	for _, t := range ng.thresholds {
 		if val <= t.Max {
 			return t.Color
 		}
 	}
-	return mlca.Forest
+	return tiles.Forest
 }

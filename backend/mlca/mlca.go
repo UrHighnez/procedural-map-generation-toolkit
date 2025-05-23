@@ -4,29 +4,17 @@ import (
 	"errors"
 	"log"
 	"math/rand"
-)
-
-type TileColorType int
-
-const (
-	DeepWater TileColorType = iota
-	Water
-	CoastalWater
-	WetSand
-	Sand
-	Grass
-	Bushes
-	Forest
+	"procedural-map-generation-toolkit/backend/tiles"
 )
 
 type Tile struct {
-	Color TileColorType
+	Color tiles.TileType
 }
 
 type ColorConditionFunc func(t Tile, neighbors []Tile, x, y int, grid [][]Tile, randomness float64) bool
 type TerrainRule struct {
-	SourceColor, TargetColor TileColorType
-	NeighborTypes            []TileColorType
+	SourceColor, TargetColor tiles.TileType
+	NeighborTypes            []tiles.TileType
 	MinCount, MaxCount       int
 }
 
@@ -41,53 +29,53 @@ func (r TerrainRule) Condition(t Tile, neighbors []Tile, _ int, _ int, _ [][]Til
 
 func CreateDefaultRules() []TerrainRule {
 	// Define water, land and foliage categories
-	waterTypes := []TileColorType{DeepWater, Water, CoastalWater}
-	landTypes := []TileColorType{Forest, Bushes, Grass, Sand, WetSand}
-	grass := []TileColorType{Grass}
-	bushes := []TileColorType{Bushes}
-	forest := []TileColorType{Forest}
+	waterTypes := []tiles.TileType{tiles.DeepWater, tiles.Water, tiles.CoastalWater}
+	landTypes := []tiles.TileType{tiles.Forest, tiles.Bushes, tiles.Grass, tiles.Sand, tiles.WetSand}
+	grass := []tiles.TileType{tiles.Grass}
+	bushes := []tiles.TileType{tiles.Bushes}
+	forest := []tiles.TileType{tiles.Forest}
 
 	// Convert foliage adjacent to water into sand
 	coastalCleanup := []TerrainRule{
-		{Forest, Sand, waterTypes, 1, -1},
-		{Bushes, Sand, waterTypes, 1, -1},
+		{tiles.Forest, tiles.Sand, waterTypes, 1, -1},
+		{tiles.Bushes, tiles.Sand, waterTypes, 1, -1},
 	}
 
 	// Convert grass into sand and sand into wet sand adjacent to water
 	beachRules := []TerrainRule{
-		{Grass, Sand, waterTypes, 1, -1},
-		{Sand, WetSand, waterTypes, 2, -1},
+		{tiles.Grass, tiles.Sand, waterTypes, 1, -1},
+		{tiles.Sand, tiles.WetSand, waterTypes, 2, -1},
 	}
 
 	// Terrain transitions (erosion and sediment buildup)
 	terrainRules := []TerrainRule{
 		// Downgrade toward water
-		{WetSand, CoastalWater, landTypes, -1, 4},
-		{CoastalWater, Water, landTypes, -1, 2},
-		{Water, DeepWater, landTypes, -1, 1},
+		{tiles.WetSand, tiles.CoastalWater, landTypes, -1, 4},
+		{tiles.CoastalWater, tiles.Water, landTypes, -1, 2},
+		{tiles.Water, tiles.DeepWater, landTypes, -1, 1},
 		// Upgrade away from water
-		{DeepWater, Water, landTypes, 1, -1},
-		{Water, CoastalWater, landTypes, 2, -1},
-		{CoastalWater, WetSand, landTypes, 5, -1},
-		{WetSand, Sand, landTypes, 6, -1},
-		{Sand, Grass, landTypes, 7, -1},
+		{tiles.DeepWater, tiles.Water, landTypes, 1, -1},
+		{tiles.Water, tiles.CoastalWater, landTypes, 2, -1},
+		{tiles.CoastalWater, tiles.WetSand, landTypes, 5, -1},
+		{tiles.WetSand, tiles.Sand, landTypes, 6, -1},
+		{tiles.Sand, tiles.Grass, landTypes, 7, -1},
 	}
 
 	// Vegetation transitions
 	foliageRules := []TerrainRule{
 		// **Birth**
-		{Grass, Bushes, grass, 8, 8},
-		{Grass, Bushes, bushes, 2, 7},
-		{Bushes, Forest, bushes, 8, 8},
-		{Bushes, Forest, forest, 3, 6},
+		{tiles.Grass, tiles.Bushes, grass, 8, 8},
+		{tiles.Grass, tiles.Bushes, bushes, 2, 7},
+		{tiles.Bushes, tiles.Forest, bushes, 8, 8},
+		{tiles.Bushes, tiles.Forest, forest, 3, 6},
 		// **Survival**
-		{Bushes, Bushes, bushes, 2, 7},
-		{Forest, Forest, forest, 3, 6},
+		{tiles.Bushes, tiles.Bushes, bushes, 2, 7},
+		{tiles.Forest, tiles.Forest, forest, 3, 6},
 		// **Dying**
-		{Bushes, Grass, bushes, -1, 1},
-		{Bushes, Grass, bushes, 8, 8},
-		{Forest, Bushes, forest, -1, 2},
-		{Forest, Bushes, forest, 7, 8},
+		{tiles.Bushes, tiles.Grass, bushes, -1, 1},
+		{tiles.Bushes, tiles.Grass, bushes, 8, 8},
+		{tiles.Forest, tiles.Bushes, forest, -1, 2},
+		{tiles.Forest, tiles.Bushes, forest, 7, 8},
 	}
 
 	// Combine in order: coastal cleanup → beaches → terrain → vegetation
@@ -97,7 +85,7 @@ func CreateDefaultRules() []TerrainRule {
 	return rules
 }
 
-func CountTilesByType(neighbors []Tile, types ...TileColorType) int {
+func CountTilesByType(neighbors []Tile, types ...tiles.TileType) int {
 	count := 0
 	for _, neighbor := range neighbors {
 		for _, t := range types {
@@ -110,7 +98,7 @@ func CountTilesByType(neighbors []Tile, types ...TileColorType) int {
 	return count
 }
 
-func GenerateTiles(width, height int, paintedTiles [][]TileColorType, iterations int, initialRandomnessFactor float64,
+func GenerateTiles(width, height int, paintedTiles [][]tiles.TileType, iterations int, initialRandomnessFactor float64,
 	rules []TerrainRule) ([][]Tile, error) {
 
 	if len(paintedTiles) != height || len(paintedTiles[0]) != width {
@@ -133,7 +121,7 @@ func GenerateTiles(width, height int, paintedTiles [][]TileColorType, iterations
 	return grid, nil
 }
 
-func initializeGrid(width, height int, paintedTiles [][]TileColorType) [][]Tile {
+func initializeGrid(width, height int, paintedTiles [][]tiles.TileType) [][]Tile {
 	grid := make([][]Tile, height)
 	paintedTilesNum := 0
 	randomTilesNum := 0
@@ -145,7 +133,7 @@ func initializeGrid(width, height int, paintedTiles [][]TileColorType) [][]Tile 
 				paintedTilesNum += 1
 				//log.Printf("Initialized painted tile at (%d, %d) with color %d", x, y, paintedTiles[y][x])
 			} else {
-				randomColor := TileColorType(rand.Intn(8))
+				randomColor := tiles.TileType(rand.Intn(8))
 				grid[y][x] = Tile{Color: randomColor}
 				randomTilesNum += 1
 				//log.Printf("Initialized random tile at (%d, %d) with color %d", x, y, randomColor)
@@ -198,22 +186,8 @@ func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 			neighbors = append(neighbors, grid[ny][nx])
 		} else {
 			// außerhalb der Karte → als Wasser behandeln:
-			neighbors = append(neighbors, Tile{Color: DeepWater})
+			neighbors = append(neighbors, Tile{Color: tiles.DeepWater})
 		}
 	}
 	return neighbors
 }
-
-//func checkForSquareCluster(grid [][]Tile, x, y int, color TileColorType) bool {
-//	cluster := false
-//	// Add logic to check for a 2x2 cluster of the specified color
-//	// For example, check if (x,y), (x+1,y), (x,y+1), (x+1,y+1) are all of the specified color
-//	if (x+1 < len(grid[0]) && y+1 < len(grid)) &&
-//		grid[y][x].Color == color &&
-//		grid[y][x+1].Color == color &&
-//		grid[y+1][x].Color == color &&
-//		grid[y+1][x+1].Color == color {
-//		cluster = true
-//	}
-//	return cluster
-//}
