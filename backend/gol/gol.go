@@ -1,4 +1,4 @@
-package ca
+package gol
 
 import (
 	"errors"

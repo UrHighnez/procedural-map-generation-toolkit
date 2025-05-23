@@ -43,7 +43,9 @@ func CreateDefaultRules() []TerrainRule {
 	// Define water, land and foliage categories
 	waterTypes := []TileColorType{DeepWater, Water, CoastalWater}
 	landTypes := []TileColorType{Forest, Bushes, Grass, Sand, WetSand}
-	foliageTypes := []TileColorType{Forest, Bushes}
+	grass := []TileColorType{Grass}
+	bushes := []TileColorType{Bushes}
+	forest := []TileColorType{Forest}
 
 	// Convert foliage adjacent to water into sand
 	coastalCleanup := []TerrainRule{
@@ -73,21 +75,19 @@ func CreateDefaultRules() []TerrainRule {
 
 	// Vegetation transitions
 	foliageRules := []TerrainRule{
-		// **Survival**
-		{Bushes, Bushes, foliageTypes, 3, 6},
-		// **Dying**
-		{Bushes, Grass, foliageTypes, -1, 2},
-		{Bushes, Grass, foliageTypes, 7, 8},
 		// **Birth**
-		{Grass, Bushes, foliageTypes, 3, 6},
-
+		{Grass, Bushes, grass, 8, 8},
+		{Grass, Bushes, bushes, 2, 7},
+		{Bushes, Forest, bushes, 8, 8},
+		{Bushes, Forest, forest, 3, 6},
 		// **Survival**
-		{Forest, Forest, foliageTypes, 2, 6},
+		{Bushes, Bushes, bushes, 2, 7},
+		{Forest, Forest, forest, 3, 6},
 		// **Dying**
-		{Forest, Bushes, foliageTypes, -1, 1},
-		{Forest, Bushes, foliageTypes, 7, 8},
-		// **Birth**
-		{Bushes, Forest, foliageTypes, 2, 6},
+		{Bushes, Grass, bushes, -1, 1},
+		{Bushes, Grass, bushes, 8, 8},
+		{Forest, Bushes, forest, -1, 2},
+		{Forest, Bushes, forest, 7, 8},
 	}
 
 	// Combine in order: coastal cleanup → beaches → terrain → vegetation
@@ -184,17 +184,21 @@ type coordinate struct {
 	x, y int
 }
 
+// getAdjacentTiles returns 8 neighbors including out-of-bounds as DeepWater
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
-	coordinates := []coordinate{
-		{x - 1, y - 1}, {x - 1, y}, {x - 1, y + 1},
-		{x, y - 1}, {x, y + 1},
-		{x + 1, y - 1}, {x + 1, y}, {x + 1, y + 1},
+	coordinates := []struct{ dx, dy int }{
+		{-1, -1}, {-1, 0}, {-1, 1},
+		{0, -1}, {0, 1},
+		{1, -1}, {1, 0}, {1, 1},
 	}
-
-	var neighbors []Tile
-	for _, coords := range coordinates {
-		if coords.x >= 0 && coords.x < width && coords.y >= 0 && coords.y < height {
-			neighbors = append(neighbors, grid[coords.y][coords.x])
+	neighbors := make([]Tile, 0, 8)
+	for _, c := range coordinates {
+		nx, ny := x+c.dx, y+c.dy
+		if nx >= 0 && nx < width && ny >= 0 && ny < height {
+			neighbors = append(neighbors, grid[ny][nx])
+		} else {
+			// außerhalb der Karte → als Wasser behandeln:
+			neighbors = append(neighbors, Tile{Color: DeepWater})
 		}
 	}
 	return neighbors

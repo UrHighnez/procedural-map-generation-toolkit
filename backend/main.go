@@ -1,7 +1,8 @@
 package main
 
 import (
-	"DnD_Mapgenerator/backend/ca"
+	"DnD_Mapgenerator/backend/gol"
+	"DnD_Mapgenerator/backend/metrics"
 	"DnD_Mapgenerator/backend/mlca"
 	"DnD_Mapgenerator/backend/noise"
 	"DnD_Mapgenerator/backend/wfc"
@@ -102,6 +103,14 @@ type GenerateRequest struct {
 	NoiseLacunarity  float64 `json:"noiseLacunarity"`
 }
 
+type GenerateResponse struct {
+	Grid        [][]int             `json:"grid"`
+	Entropy     float64             `json:"entropy"`
+	Adjacency   map[int]map[int]int `json:"adjacency"`
+	Clusters    []int               `json:"clusters"`
+	Frequencies map[int]float64     `json:"frequencies"`
+}
+
 func generateTiles(c echo.Context) error {
 	req := new(GenerateRequest)
 	if err := c.Bind(req); err != nil {
@@ -138,45 +147,36 @@ func generateTiles(c echo.Context) error {
 				"error": "Tile generation failed",
 			})
 		}
-		// Output
-		return c.JSON(http.StatusOK, grid)
 
-	case "gol":
-		// Reconstruct grid from prevGrid or create new
-		var tileGrid [][]ca.Tile
-		if len(req.PrevGrid) > 0 {
-			// Reconstruct
-			tileGrid = make([][]ca.Tile, req.Height)
-			for y := 0; y < req.Height; y++ {
-				tileGrid[y] = make([]ca.Tile, req.Width)
-				for x := 0; x < req.Width; x++ {
-					tileGrid[y][x].State = ca.TileState(req.PrevGrid[y][x])
-				}
-			}
-		} else {
-			// randomize new
-			tileGrid = ca.NewGrid(req.Width, req.Height)
-		}
+		tileGrid := grid
 
-		// Print painted cells
-		for y := 0; y < len(req.PaintedTiles) && y < len(tileGrid); y++ {
-			for x := 0; x < len(req.PaintedTiles[y]) && x < len(tileGrid[0]); x++ {
-				if req.PaintedTiles[y][x] == ca.Alive {
-					tileGrid[y][x].State = ca.Alive
-				} else if req.PaintedTiles[y][x] == ca.Dead {
-					tileGrid[y][x].State = ca.Dead
-				}
+		// convert to [][]int
+		intGrid := make([][]int, len(tileGrid))
+		for y := range tileGrid {
+			intGrid[y] = make([]int, len(tileGrid[y]))
+			for x := range tileGrid[y] {
+				intGrid[y][x] = int(tileGrid[y][x].Color)
 			}
 		}
 
-		// Evolution
-		nextGrid, err := ca.StepCA(tileGrid, req.Iterations)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "CA generation failed: "+err.Error())
-		}
+		ent := metrics.TileEntropy(intGrid)
+		adj := metrics.AdjacencyMatrix(intGrid)
+		clusters := metrics.ClusterSizes(intGrid)
+		//fdim := metrics.FractalDimension(grid)
+		//spec := metrics.SpectralSpectrum(grid)
+		//auto := metrics.Autocorrelation(grid)
+		//grad := metrics.GradientHistogram(grid)
+		freq := metrics.TileFrequencies(intGrid)
 
+		resp := GenerateResponse{
+			Grid:        intGrid,
+			Entropy:     ent,
+			Adjacency:   adj,
+			Clusters:    clusters,
+			Frequencies: freq,
+		}
 		// Output
-		return c.JSON(http.StatusOK, ca.TilesToIntGrid(nextGrid))
+		return c.JSON(http.StatusOK, resp)
 
 	case "noise":
 
@@ -194,16 +194,28 @@ func generateTiles(c echo.Context) error {
 		tileGrid := ng.Generate(req.Width, req.Height)
 
 		// Convert to [][]int
-		out := make([][]int, req.Height)
+		intGrid := make([][]int, req.Height)
 		for y := 0; y < req.Height; y++ {
-			out[y] = make([]int, req.Width)
+			intGrid[y] = make([]int, req.Width)
 			for x := 0; x < req.Width; x++ {
-				out[y][x] = int(tileGrid[y][x].Color)
+				intGrid[y][x] = int(tileGrid[y][x].Color)
 			}
 		}
 
+		ent := metrics.TileEntropy(intGrid)
+		adj := metrics.AdjacencyMatrix(intGrid)
+		clusters := metrics.ClusterSizes(intGrid)
+		freq := metrics.TileFrequencies(intGrid)
+
+		resp := GenerateResponse{
+			Grid:        intGrid,
+			Entropy:     ent,
+			Adjacency:   adj,
+			Clusters:    clusters,
+			Frequencies: freq,
+		}
 		// Output
-		return c.JSON(http.StatusOK, out)
+		return c.JSON(http.StatusOK, resp)
 
 	case "wfc":
 		// Create a new grid
@@ -216,15 +228,65 @@ func generateTiles(c echo.Context) error {
 		}
 
 		// Convert [][]wfc.TileType to [][]int
-		out := make([][]int, len(tiles))
+		intGrid := make([][]int, len(tiles))
 		for y := range tiles {
-			out[y] = make([]int, len(tiles[y]))
+			intGrid[y] = make([]int, len(tiles[y]))
 			for x := range tiles[y] {
-				out[y][x] = int(tiles[y][x])
+				intGrid[y][x] = int(tiles[y][x])
 			}
 		}
 
-		return c.JSON(http.StatusOK, out)
+		ent := metrics.TileEntropy(intGrid)
+		adj := metrics.AdjacencyMatrix(intGrid)
+		clusters := metrics.ClusterSizes(intGrid)
+		freq := metrics.TileFrequencies(intGrid)
+
+		resp := GenerateResponse{
+			Grid:        intGrid,
+			Entropy:     ent,
+			Adjacency:   adj,
+			Clusters:    clusters,
+			Frequencies: freq,
+		}
+		// Output
+		return c.JSON(http.StatusOK, resp)
+
+	case "gol":
+		// Reconstruct grid from prevGrid or create new
+		var tileGrid [][]gol.Tile
+		if len(req.PrevGrid) > 0 {
+			// Reconstruct
+			tileGrid = make([][]gol.Tile, req.Height)
+			for y := 0; y < req.Height; y++ {
+				tileGrid[y] = make([]gol.Tile, req.Width)
+				for x := 0; x < req.Width; x++ {
+					tileGrid[y][x].State = gol.TileState(req.PrevGrid[y][x])
+				}
+			}
+		} else {
+			// randomize new
+			tileGrid = gol.NewGrid(req.Width, req.Height)
+		}
+
+		// Print painted cells
+		for y := 0; y < len(req.PaintedTiles) && y < len(tileGrid); y++ {
+			for x := 0; x < len(req.PaintedTiles[y]) && x < len(tileGrid[0]); x++ {
+				if req.PaintedTiles[y][x] == gol.Alive {
+					tileGrid[y][x].State = gol.Alive
+				} else if req.PaintedTiles[y][x] == gol.Dead {
+					tileGrid[y][x].State = gol.Dead
+				}
+			}
+		}
+
+		// Evolution
+		nextGrid, err := gol.StepCA(tileGrid, req.Iterations)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "CA generation failed: "+err.Error())
+		}
+
+		// Output
+		return c.JSON(http.StatusOK, gol.TilesToIntGrid(nextGrid))
 
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "Unknown generation Method")

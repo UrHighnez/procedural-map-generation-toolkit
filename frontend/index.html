@@ -15,6 +15,14 @@
     <button id="load-btn">Load</button>
 </div>
 
+<div id="metrics-panel">
+    <h3>Metrics</h3>
+    <p>Entropy: <span id="entropy">–</span></p>
+    <p>Adjacency: <span id="adjacency">–</span></p>
+    <p>Cluster Sizes: <span id="clusters">–</span></p>
+    <p>Tile Frequencies: <span id="frequencies">–</span></p>
+</div>
+
 <div id="tools-panel" class="hidden">
 
     <div>
@@ -55,9 +63,9 @@
         </label>
         <select id="generation-method">
             <option value="mlca">Multi-Layered Cellular Automata</option>
-            <option value="gol">Game of Life</option>
             <option value="noise">Perlin Noise</option>
             <option value="wfc">Wave Function Collapse</option>
+            <option value="gol">Game of Life</option>
         </select>
     </div>
 

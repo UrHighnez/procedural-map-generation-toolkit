@@ -1,6 +1,6 @@
 package metrics
 
-// ClusterSizes liefert Slice mit allen Clustergrößen
+// ClusterSizes returns slice with all cluster sizes
 func ClusterSizes(grid [][]int) []int {
 	H, W := len(grid), len(grid[0])
 	seen := make([][]bool, H)

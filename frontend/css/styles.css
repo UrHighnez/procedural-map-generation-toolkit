@@ -39,25 +39,42 @@ body {
 
 #toolbar {
     position: absolute;
-    top: 500px;
+    top: 510px;
     left: 10px;
     z-index: 2;
 }
 
-#tools-btn {
+#metrics-panel {
+    position: absolute;
+    top: 530px;
+    left: 10px;
+}
+
+#tools-btn,
+#generate-btn,
+#save-btn,
+#load-btn {
     background-color: #f1f1f1;
     border: 1px solid #d3d3d3;
     cursor: pointer;
     padding: 5px 10px;
     font-size: 14px;
+    font-weight: bold;
+}
+
+#tools-btn:hover,
+#generate-btn:hover,
+#save-btn:hover,
+#load-btn:hover {
+    background-color: #74d3ff;
 }
 
 #tools-panel {
-    background-color: #f1f1f1;
+    background-color: rgba(241, 241, 241, 0.85);
     border: 1px solid #d3d3d3;
     padding: 5px;
     position: absolute;
-    top: 530px;
+    top: 540px;
     left: 10px;
     z-index: 2;
     flex-direction: column;

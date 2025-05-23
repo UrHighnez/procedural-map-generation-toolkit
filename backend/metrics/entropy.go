@@ -2,7 +2,7 @@ package metrics
 
 import "math"
 
-// TileEntropy berechnet H = -∑ p_i log2(p_i)
+// TileEntropy calculates H = -∑ p_i log2(p_i)
 func TileEntropy(grid [][]int) float64 {
 	counts := make(map[int]int)
 	total := 0

@@ -1,6 +1,6 @@
 package metrics
 
-// AdjacencyMatrix[i][j] = Anzahl der Kachelpaar-Vorkommen von i neben j
+// AdjacencyMatrix[i][j] = Number of cell pair appearances i next to j
 func AdjacencyMatrix(grid [][]int) map[int]map[int]int {
 	adj := make(map[int]map[int]int)
 	dirs := [][2]int{{1, 0}, {0, 1}, {-1, 0}, {0, -1}}

@@ -147,25 +147,26 @@ async function generateCanvas() {
 
 
         if (response.ok) {
-            const mapData = await response.json();
-            console.log('Server response: ', mapData);
+            const data = await response.json();
+            console.log('Server response: ', data);
 
+            const grid = Array.isArray(data) ? data : data.grid;
 
             // Render the generated map on the canvas
             const canvas = document.getElementById('paint-canvas');
             const ctx = canvas.getContext('2d');
 
-            let isObjectFormat = !!(mapData[0] && typeof mapData[0][0] === "object" && "Color" in mapData[0][0]);
+            // let isObjectFormat = !!(data[0] && typeof data[0][0] === "object" && "Color" in data[0][0]);
 
-            for (let y = 0; y < mapData.length; y++) {
-                for (let x = 0; x < mapData[y].length; x++) {
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) {
 
-                    let colorCode;
-                    if (isObjectFormat) {
-                        colorCode = mapData[y][x].Color;
-                    } else {
-                        colorCode = mapData[y][x];
-                    }
+                    let colorCode = grid[y][x];
+                    // if (isObjectFormat) {
+                    //     colorCode = data[y][x].Color;
+                    // } else {
+                    //     colorCode = data[y][x];
+                    // }
 
                     switch (colorCode) {
                         case 0:
@@ -199,7 +200,17 @@ async function generateCanvas() {
                     ctx.fillRect(x * TileSize, y * TileSize, TileSize, TileSize);
                 }
             }
+
+            document.getElementById('entropy').textContent = data.entropy.toFixed(2);
+            // document.getElementById('adjacency').textContent = data.adjacency
+            document.getElementById('clusters').textContent = data.clusters.join(', ');
+            document.getElementById('frequencies').textContent =
+                Object.entries(data.frequencies)
+                    .map(([tile, p]) => `${tile}: ${(p * 100).toFixed(1)}%`)
+                    .join(' | ');
+
         }
+
         if (!response.ok) {
             const text = await response.text();
             console.error('Failed to generate the map: ', response.status, text);

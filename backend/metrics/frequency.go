@@ -1,6 +1,6 @@
 package metrics
 
-// TileFrequencies liefert relative Häufigkeiten je Typ
+// TileFrequencies returns relative frequency per type
 func TileFrequencies(grid [][]int) map[int]float64 {
 	counts := make(map[int]int)
 	total := 0
@@ -10,7 +10,13 @@ func TileFrequencies(grid [][]int) map[int]float64 {
 			total++
 		}
 	}
-	freq := make(map[int]float64)
+
+	freq := make(map[int]float64, 8)
+
+	for t := 0; t < 8; t++ {
+		freq[t] = 0.0
+	}
+
 	for t, cnt := range counts {
 		freq[t] = float64(cnt) / float64(total)
 	}
