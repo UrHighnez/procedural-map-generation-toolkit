@@ -208,7 +208,16 @@ async function generateCanvas() {
                 Object.entries(data.frequencies)
                     .map(([tile, p]) => `${tile}: ${(p * 100).toFixed(1)}%`)
                     .join(' | ');
-
+            const adj = data.adjacency
+            const adjStrings = []
+            for (let i = 0; i <= 7; i++) {
+                if (!adj[i]) continue
+                for (let j = 0; j <= 7; j++) {
+                    const count = adj[i][j] || 0
+                    adjStrings.push(`${i} -> ${j}: ${count}`)
+                }
+            }
+            document.getElementById('adjacency').textContent = adjStrings.join(' | ')
         }
 
         if (!response.ok) {
