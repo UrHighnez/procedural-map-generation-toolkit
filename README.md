@@ -2,7 +2,8 @@
 
 ## Description
 
-This project provides a modular toolkit for the procedural generation of 2D tile-based maps. It supports multiple algorithms and automatically computes metrics to evaluate the generated worlds.
+This project provides a modular toolkit for the procedural generation of 2D tile-based maps. It supports multiple
+algorithms and automatically computes metrics to evaluate the generated worlds.
 
 ### Supported Algorithms
 
@@ -46,7 +47,7 @@ This project provides a modular toolkit for the procedural generation of 2D tile
 ```bash
 # Clone repository
 git clone https://github.com/UrHighnez/procedural-map-generation-toolkit.git
-cd world-generation-toolkit
+cd procedural-map-generation-toolkit
 
 # Download dependencies
 go mod download
