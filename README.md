@@ -20,7 +20,6 @@ algorithms and automatically computes metrics to evaluate the generated worlds.
 * **Fractal Dimension** *(planned)*
 * **Spectral Analysis** *(planned)*
 * **Pattern Repetition** *(planned)*
-* **Gradient Distribution** *(planned)*
 
 ### Features
 

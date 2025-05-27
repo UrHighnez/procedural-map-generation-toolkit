@@ -18,13 +18,13 @@ type TerrainRule struct {
 	MinCount, MaxCount       int
 }
 
-func (r TerrainRule) Condition(t Tile, neighbors []Tile, _ int, _ int, _ [][]Tile, randomness float64) bool {
+func (r TerrainRule) Condition(t Tile, neighbors []Tile, _ int, _ int, _ [][]Tile, randomness float64, rng *rand.Rand) bool {
 	count := CountTilesByType(neighbors, r.NeighborTypes...)
 	passCount := (r.MinCount < 0 || count >= r.MinCount) && (r.MaxCount < 0 || count <= r.MaxCount)
-	if randomness == 0 {
+	if randomness <= 0 {
 		return t.Color == r.SourceColor && passCount
 	}
-	return t.Color == r.SourceColor && passCount && rand.Float64() < randomness
+	return t.Color == r.SourceColor && passCount && rng.Float64() < randomness
 }
 
 func CreateDefaultRules() []TerrainRule {
@@ -99,21 +99,20 @@ func CountTilesByType(neighbors []Tile, types ...tiles.TileType) int {
 }
 
 func GenerateTiles(width, height int, paintedTiles [][]tiles.TileType, iterations int, initialRandomnessFactor float64,
-	rules []TerrainRule) ([][]Tile, error) {
+	rules []TerrainRule, rng *rand.Rand) ([][]Tile, error) {
 
 	if len(paintedTiles) != height || len(paintedTiles[0]) != width {
 		return nil, errors.New("paintedTiles dimensions do not match provided dimensions")
 	}
 
-	grid := initializeGrid(width, height, paintedTiles)
+	grid := initializeGrid(width, height, paintedTiles, rng)
 
 	for i := 0; i < iterations; i++ {
 		// Increase the decay rate
-		//decay := float64(i*i) / float64(iterations*iterations)
-		randomnessFactor := initialRandomnessFactor
-		//* (1.0 - decay)
+		decay := float64(i*i) / float64(iterations*iterations)
+		randomnessFactor := initialRandomnessFactor * (1.0 - decay)
 
-		grid = applyRules(grid, rules, width, height, randomnessFactor)
+		grid = applyRules(grid, rules, width, height, randomnessFactor, rng)
 
 		log.Printf("Iteration %d complete", i)
 	}
@@ -121,7 +120,7 @@ func GenerateTiles(width, height int, paintedTiles [][]tiles.TileType, iteration
 	return grid, nil
 }
 
-func initializeGrid(width, height int, paintedTiles [][]tiles.TileType) [][]Tile {
+func initializeGrid(width, height int, paintedTiles [][]tiles.TileType, rng *rand.Rand) [][]Tile {
 	grid := make([][]Tile, height)
 	paintedTilesNum := 0
 	randomTilesNum := 0
@@ -133,7 +132,7 @@ func initializeGrid(width, height int, paintedTiles [][]tiles.TileType) [][]Tile
 				paintedTilesNum += 1
 				//log.Printf("Initialized painted tile at (%d, %d) with color %d", x, y, paintedTiles[y][x])
 			} else {
-				randomColor := tiles.TileType(rand.Intn(8))
+				randomColor := tiles.TileType(rng.Intn(8))
 				grid[y][x] = Tile{Color: randomColor}
 				randomTilesNum += 1
 				//log.Printf("Initialized random tile at (%d, %d) with color %d", x, y, randomColor)
@@ -144,7 +143,7 @@ func initializeGrid(width, height int, paintedTiles [][]tiles.TileType) [][]Tile
 	return grid
 }
 
-func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnessFactor float64) [][]Tile {
+func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnessFactor float64, rng *rand.Rand) [][]Tile {
 	nextGrid := make([][]Tile, height)
 	for y := 0; y < height; y++ {
 		nextGrid[y] = make([]Tile, width)
@@ -153,7 +152,7 @@ func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnes
 			neighbors := getAdjacentTiles(grid, x, y, width, height)
 			ruleApplied := false
 			for _, rule := range rules {
-				if rule.Condition(currentTile, neighbors, x, y, grid, randomnessFactor) {
+				if rule.Condition(currentTile, neighbors, x, y, grid, randomnessFactor, rng) {
 					nextGrid[y][x] = Tile{Color: rule.TargetColor}
 					//log.Printf("Applied rule from %d to %d at (%d, %d)", rule.SourceColor, rule.TargetColor, x, y)
 					ruleApplied = true
@@ -168,9 +167,9 @@ func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnes
 	return nextGrid
 }
 
-type coordinate struct {
-	x, y int
-}
+//type coordinate struct {
+//	x, y int
+//}
 
 // getAdjacentTiles returns 8 neighbors including out-of-bounds as DeepWater
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {

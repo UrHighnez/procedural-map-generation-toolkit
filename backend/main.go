@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,6 +21,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+const fixedSeed = 1
 
 func main() {
 	e := echo.New()
@@ -112,6 +115,10 @@ type GenerateResponse struct {
 	Frequencies map[int]float64     `json:"frequencies"`
 }
 
+func newRNG(seed int64) *rand.Rand {
+	return rand.New(rand.NewSource(seed))
+}
+
 func generateTiles(c echo.Context) error {
 	req := new(GenerateRequest)
 	if err := c.Bind(req); err != nil {
@@ -141,6 +148,7 @@ func generateTiles(c echo.Context) error {
 			req.Iterations,
 			req.RandomnessFactor,
 			rules,
+			newRNG(fixedSeed),
 		)
 		if err != nil {
 			log.Printf("Tile generation error: %v\n", err)
