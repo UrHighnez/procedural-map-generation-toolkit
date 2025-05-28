@@ -16,10 +16,10 @@ algorithms and automatically computes metrics to evaluate the generated worlds.
 * **Tile Entropy** (information content)
 * **Adjacency Matrix** (neighbor distributions)
 * **Cluster Sizes** (connected regions)
-* **Tile Type Frequencies**
-* **Fractal Dimension** *(planned)*
-* **Spectral Analysis** *(planned)*
-* **Pattern Repetition** *(planned)*
+* **Tile Type Frequencies** (overall distribution)
+* **Autocorrelation** (spatial self-similarity at various lags)
+* **Fractal Dimension** (structural complexity via box-counting)
+* **Spectral Analysis** (frequency-domain pattern spectrum)
 
 ### Features
 
