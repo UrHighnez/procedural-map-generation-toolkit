@@ -127,8 +127,8 @@ async function loadCanvas() {
 
 async function generateCanvas() {
     const canvas = document.getElementById('paint-canvas');
-    const width = canvas.width; // Set the desired width
-    const height = canvas.height; // Set the desired height
+    const width = canvas.width;
+    const height = canvas.height;
 
     let grid = [];
 
@@ -188,26 +188,72 @@ async function generateCanvas() {
                 }
             }
 
+            // ENTROPY
             document.getElementById('entropy').textContent = data.entropy.toFixed(2);
 
-            document.getElementById('clusters').textContent = data.clusters.join(', ');
+            // CLUSTER
+            const rawGrid = Array.isArray(data) ? data : data.grid;
+            const clusters = getClusters(rawGrid);
+            const clusterStrings = clusters.map(({ tileType, size }) => {
+                const color = data.colors[tileType] || '#cccccc';
+                return `
+                    <span style="
+                        display:inline-block;
+                        width:0.5em; height:0.5em;
+                        vertical-align:middle;
+                        background-color:${color};
+                    "></span>
+                    ${size}
+                `;
+            });
+            document.getElementById('clusters').innerHTML = clusterStrings.join(' | ');
 
-            document.getElementById('frequencies').textContent =
-                Object.entries(data.frequencies)
-                    .map(([tile, p]) => `${tile}: ${(p * 100).toFixed(1)}%`)
-                    .join(' | ');
 
-            const adj = data.adjacency
-            const adjStrings = []
-            for (let i = 0; i <= 7; i++) {
-                if (!adj[i]) continue
-                for (let j = 0; j <= 7; j++) {
-                    const count = adj[i][j] || 0
-                    if (count === 0) continue
-                    adjStrings.push(`${i} → ${j}: ${count}`)
+            // FREQUENCY
+            const freqStrings = Object.entries(data.frequencies).map(([tileIdx, p]) => {
+                const idx     = +tileIdx;
+                const color   = data.colors[idx] || '#cccccc';
+                const percent = (p * 100).toFixed(1);
+                return `
+                    <span style="
+                        display:inline-block;
+                        width:0.5em; height:0.5em;
+                        vertical-align:middle;
+                        background-color:${color};
+                    "></span>
+                    ${idx}: ${percent}%
+                `;
+            });
+            document.getElementById('frequencies').innerHTML = freqStrings.join(' | ');
+
+
+            // ADJACENCY
+            const adjStrings = [];
+            const C = data.colors.length;
+            for (let i = 0; i < C; i++) {
+                for (let j = 0; j < C; j++) {
+                    const count = (data.adjacency[i] || [])[j] || 0;
+                    if (!count) continue;
+                    const ci = data.colors[i] || '#cccccc';
+                    const cj = data.colors[j] || '#cccccc';
+                    adjStrings.push(`
+                        <span style="
+                            display:inline-block;
+                            width:0.5em; height:0.5em;
+                            background-color:${ci};
+                        "></span>
+                        →
+                        <span style="
+                            display:inline-block;
+                            width:0.5em; height:0.5em;
+                            background-color:${cj};
+                        "></span>
+                        ${count}
+                    `);
                 }
             }
-            document.getElementById('adjacency').textContent = adjStrings.join(' | ')
+            document.getElementById('adjacency').innerHTML = adjStrings.join(' | ');
+
         }
 
         if (!response.ok) {
@@ -264,11 +310,45 @@ function getPaintedTiles() {
             const color = getColor(imgData);
 
             if (color !== -1) {
-                // console.log(`Detected color ${color} at (${x}, ${y})`);
                 tiles[y][x] = color;
             }
         }
     }
 
     return tiles;
+}
+
+function getClusters(grid) {
+    const rows = grid.length, cols = grid[0].length;
+    const seen = Array.from({ length: rows }, () => Array(cols).fill(false));
+    const clusters = [];
+
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (seen[y][x]) continue;
+            const type = grid[y][x];
+            let size = 0;
+            const stack = [[x, y]];
+            seen[y][x] = true;
+
+            while (stack.length) {
+                const [cx, cy] = stack.pop();
+                size++;
+                [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
+                    const nx = cx + dx, ny = cy + dy;
+                    if (
+                        nx >= 0 && nx < cols && ny >= 0 && ny < rows &&
+                        !seen[ny][nx] && grid[ny][nx] === type
+                    ) {
+                        seen[ny][nx] = true;
+                        stack.push([nx, ny]);
+                    }
+                });
+            }
+
+            clusters.push({ tileType: type, size });
+        }
+    }
+
+    return clusters;
 }

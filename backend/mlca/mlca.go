@@ -167,10 +167,6 @@ func applyRules(grid [][]Tile, rules []TerrainRule, width, height int, randomnes
 	return nextGrid
 }
 
-//type coordinate struct {
-//	x, y int
-//}
-
 // getAdjacentTiles returns 8 neighbors including out-of-bounds as DeepWater
 func getAdjacentTiles(grid [][]Tile, x, y, width, height int) []Tile {
 	coordinates := []struct{ dx, dy int }{
