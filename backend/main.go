@@ -116,6 +116,9 @@ type GenerateResponse struct {
 	Entropy     float64                    `json:"entropy"`
 	Adjacency   map[int]map[int]int        `json:"adjacency"`
 	Frequencies map[int]float64            `json:"frequencies"`
+	Autocorr    map[string]float64         `json:"autocorr"`
+	FractalDim  float64                    `json:"fractalDim"`
+	Spectrum    [][]float64                `json:"spectrum"`
 }
 
 func generateTiles(c echo.Context) error {
@@ -129,19 +132,22 @@ func generateTiles(c echo.Context) error {
 		ent     float64
 		adj     map[int]map[int]int
 		freq    map[int]float64
+		auto    map[[2]int]float64
+		fd      float64
+		spec    [][]float64
 
 		genErr error
 	)
 
 	switch req.GenerationMethod {
 	case "mlca":
-		intGrid, ent, adj, freq, genErr = runMLCA(req)
+		intGrid, ent, adj, freq, auto, fd, spec, genErr = runMLCA(req)
 	case "noise":
-		intGrid, ent, adj, freq, genErr = runNoise(req)
+		intGrid, ent, adj, freq, auto, fd, spec, genErr = runNoise(req)
 	case "wfc":
-		intGrid, ent, adj, freq, genErr = runWFC(req)
+		intGrid, ent, adj, freq, auto, fd, spec, genErr = runWFC(req)
 	case "gol":
-		intGrid, ent, adj, freq, genErr = runGOL(req)
+		intGrid, ent, adj, freq, auto, fd, spec, genErr = runGOL(req)
 	default:
 		return echo.NewHTTPError(http.StatusBadRequest, "Unknown generation method")
 	}
@@ -151,17 +157,26 @@ func generateTiles(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": genErr.Error()})
 	}
 
+	autoStr := make(map[string]float64, len(auto))
+	for k, v := range auto {
+		key := fmt.Sprintf("%d,%d", k[0], k[1])
+		autoStr[key] = v
+	}
+
 	resp := GenerateResponse{
 		Grid:        intGrid,
 		Colors:      tiles.TileColors,
 		Entropy:     ent,
 		Adjacency:   adj,
 		Frequencies: freq,
+		Autocorr:    autoStr,
+		FractalDim:  fd,
+		Spectrum:    spec,
 	}
 	return c.JSON(http.StatusOK, resp)
 }
 
-func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, error) {
+func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
 	// Convert painted
 	painted := make([][]tiles.TileType, len(req.PaintedTiles))
 	for y := range req.PaintedTiles {
@@ -173,7 +188,7 @@ func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[i
 	// Generate
 	tileGrid, err := mlca.GenerateTiles(req.Width, req.Height, painted, req.Iterations, req.RandomnessFactor, mlca.CreateDefaultRules(), rand.New(rand.NewSource(fixedSeed)))
 	if err != nil {
-		return nil, 0, nil, nil, err
+		return nil, 0, nil, nil, nil, 0, nil, err
 	}
 	// to ints
 	intGrid := make([][]int, len(tileGrid))
@@ -187,10 +202,14 @@ func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[i
 	ent := metrics.TileEntropy(intGrid)
 	adj := metrics.AdjacencyMatrix(intGrid)
 	freq := metrics.TileFrequencies(intGrid)
-	return intGrid, ent, adj, freq, nil
+	auto := metrics.Autocorrelation(intGrid, 5)
+	fd := metrics.FractalDimension(intGrid)
+	spec := metrics.SpectralSpectrum(intGrid)
+
+	return intGrid, ent, adj, freq, auto, fd, spec, nil
 }
 
-func runNoise(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, error) {
+func runNoise(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
 	ng := noise.NewNoiseGenerator(int64(fixedSeed), req.NoiseScale, req.NoiseOctaves, req.NoisePersistence, req.NoiseLacunarity)
 	tileGrid := ng.Generate(req.Width, req.Height)
 	intGrid := make([][]int, req.Height)
@@ -203,14 +222,18 @@ func runNoise(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[
 	ent := metrics.TileEntropy(intGrid)
 	adj := metrics.AdjacencyMatrix(intGrid)
 	freq := metrics.TileFrequencies(intGrid)
-	return intGrid, ent, adj, freq, nil
+	auto := metrics.Autocorrelation(intGrid, 5)
+	fd := metrics.FractalDimension(intGrid)
+	spec := metrics.SpectralSpectrum(intGrid)
+
+	return intGrid, ent, adj, freq, auto, fd, spec, nil
 }
 
-func runWFC(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, error) {
+func runWFC(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
 	gridObj := wfc.NewGrid(req.Width, req.Height)
 	tilesOut, err := gridObj.Solve(100)
 	if err != nil {
-		return nil, 0, nil, nil, err
+		return nil, 0, nil, nil, nil, 0, nil, err
 	}
 	intGrid := make([][]int, len(tilesOut))
 	for y := range tilesOut {
@@ -222,10 +245,14 @@ func runWFC(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[in
 	ent := metrics.TileEntropy(intGrid)
 	adj := metrics.AdjacencyMatrix(intGrid)
 	freq := metrics.TileFrequencies(intGrid)
-	return intGrid, ent, adj, freq, nil
+	auto := metrics.Autocorrelation(intGrid, 5)
+	fd := metrics.FractalDimension(intGrid)
+	spec := metrics.SpectralSpectrum(intGrid)
+
+	return intGrid, ent, adj, freq, auto, fd, spec, nil
 }
 
-func runGOL(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, error) {
+func runGOL(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
 	var tileGrid [][]gol.Tile
 	if len(req.PrevGrid) > 0 {
 		tileGrid = make([][]gol.Tile, req.Height)
@@ -241,23 +268,30 @@ func runGOL(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[in
 	// Paint overrides
 	for y := range req.PaintedTiles {
 		for x := range req.PaintedTiles[y] {
-			switch tiles.TileType(req.PaintedTiles[y][x]) {
-			case tiles.Bushes:
-				tileGrid[y][x].State = tiles.Bushes
-			case tiles.Sand:
-				tileGrid[y][x].State = tiles.Sand
+			v := req.PaintedTiles[y][x]
+			if v < 0 || v >= int(tiles.NumTileTypes) {
+				continue
+			}
+			t := tiles.TileType(v)
+			switch t {
+			case tiles.Bushes, tiles.Sand:
+				tileGrid[y][x].State = t
 			default:
-				panic("No valid tile type.")
+				log.Printf("Ignoring painted tile %d at %d,%d", v, x, y)
 			}
 		}
 	}
 	next, err := gol.StepCA(tileGrid, req.Iterations)
 	if err != nil {
-		return nil, 0, nil, nil, err
+		return nil, 0, nil, nil, nil, 0, nil, err
 	}
 	intGrid := gol.TilesToIntGrid(next)
 	ent := metrics.TileEntropy(intGrid)
 	adj := metrics.AdjacencyMatrix(intGrid)
 	freq := metrics.TileFrequencies(intGrid)
-	return intGrid, ent, adj, freq, nil
+	auto := metrics.Autocorrelation(intGrid, 5)
+	fd := metrics.FractalDimension(intGrid)
+	spec := metrics.SpectralSpectrum(intGrid)
+
+	return intGrid, ent, adj, freq, auto, fd, spec, nil
 }
