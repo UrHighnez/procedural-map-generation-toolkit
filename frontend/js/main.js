@@ -155,18 +155,12 @@ async function generateCanvas() {
             // Render the generated map on the canvas
             const canvas = document.getElementById('paint-canvas');
             const ctx = canvas.getContext('2d');
-
-            // let isObjectFormat = !!(data[0] && typeof data[0][0] === "object" && "Color" in data[0][0]);
+            // const tileColors = data.colors;
 
             for (let y = 0; y < grid.length; y++) {
                 for (let x = 0; x < grid[y].length; x++) {
 
                     let colorCode = grid[y][x];
-                    // if (isObjectFormat) {
-                    //     colorCode = data[y][x].Color;
-                    // } else {
-                    //     colorCode = data[y][x];
-                    // }
 
                     switch (colorCode) {
                         case 0:
@@ -202,19 +196,22 @@ async function generateCanvas() {
             }
 
             document.getElementById('entropy').textContent = data.entropy.toFixed(2);
-            // document.getElementById('adjacency').textContent = data.adjacency
+
             document.getElementById('clusters').textContent = data.clusters.join(', ');
+
             document.getElementById('frequencies').textContent =
                 Object.entries(data.frequencies)
                     .map(([tile, p]) => `${tile}: ${(p * 100).toFixed(1)}%`)
                     .join(' | ');
+
             const adj = data.adjacency
             const adjStrings = []
             for (let i = 0; i <= 7; i++) {
                 if (!adj[i]) continue
                 for (let j = 0; j <= 7; j++) {
                     const count = adj[i][j] || 0
-                    adjStrings.push(`${i} -> ${j}: ${count}`)
+                    if (count === 0) continue
+                    adjStrings.push(`${i} → ${j}: ${count}`)
                 }
             }
             document.getElementById('adjacency').textContent = adjStrings.join(' | ')
