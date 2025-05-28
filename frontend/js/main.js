@@ -194,7 +194,7 @@ async function generateCanvas() {
             // CLUSTER
             const rawGrid = Array.isArray(data) ? data : data.grid;
             const clusters = getClusters(rawGrid);
-            const clusterStrings = clusters.map(({ tileType, size }) => {
+            const clusterStrings = clusters.map(({tileType, size}) => {
                 const color = data.colors[tileType] || '#cccccc';
                 return `
                     <span style="
@@ -211,8 +211,8 @@ async function generateCanvas() {
 
             // FREQUENCY
             const freqStrings = Object.entries(data.frequencies).map(([tileIdx, p]) => {
-                const idx     = +tileIdx;
-                const color   = data.colors[idx] || '#cccccc';
+                const idx = +tileIdx;
+                const color = data.colors[idx] || '#cccccc';
                 const percent = (p * 100).toFixed(1);
                 return `
                     <span style="
@@ -253,6 +253,28 @@ async function generateCanvas() {
                 }
             }
             document.getElementById('adjacency').innerHTML = adjStrings.join(' | ');
+
+            // AUTOCORRELATION
+            // data.autocorr is an object { "0,0": 1.0, "1,0": 0.8, ... }
+            const autoEntries = Object.entries(data.autocorr).map(([lag, val]) => {
+                return `${lag}: ${val.toFixed(2)}`;
+            });
+            document.getElementById('autocorr').textContent = autoEntries.join(' | ');
+
+            // FRACTAL DIMENSION
+            // data.fractalDim is a number
+            document.getElementById('fractalDim').textContent = data.fractalDim.toFixed(2);
+
+            // SPECTRAL SPECTRUM
+            // data.spectrum st a 2D array [[...], [...], …]
+            // Show the first N values, formated to a single decimal.
+            const N = Math.min(5, data.spectrum[0].length);  // e.g. the first 5 columns
+            const specLines = data.spectrum.map(row => {
+                return row.slice(0, N)
+                    .map(v => v.toFixed(1))
+                    .join(', ');
+            });
+            document.getElementById('spectrum').textContent = specLines.join('\n');
 
         }
 
@@ -320,7 +342,7 @@ function getPaintedTiles() {
 
 function getClusters(grid) {
     const rows = grid.length, cols = grid[0].length;
-    const seen = Array.from({ length: rows }, () => Array(cols).fill(false));
+    const seen = Array.from({length: rows}, () => Array(cols).fill(false));
     const clusters = [];
 
     for (let y = 0; y < rows; y++) {
@@ -334,7 +356,7 @@ function getClusters(grid) {
             while (stack.length) {
                 const [cx, cy] = stack.pop();
                 size++;
-                [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
+                [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
                     const nx = cx + dx, ny = cy + dy;
                     if (
                         nx >= 0 && nx < cols && ny >= 0 && ny < rows &&
@@ -346,7 +368,7 @@ function getClusters(grid) {
                 });
             }
 
-            clusters.push({ tileType: type, size });
+            clusters.push({tileType: type, size});
         }
     }
 
