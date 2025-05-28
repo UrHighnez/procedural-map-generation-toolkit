@@ -35,6 +35,9 @@ func main() {
 
 	e.POST("/save", saveMap)
 	e.GET("/load", loadMap)
+	e.GET("/colors", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, tiles.TileColors)
+	})
 	e.POST("/generate", generateTiles)
 
 	e.GET("/*", func(c echo.Context) error {

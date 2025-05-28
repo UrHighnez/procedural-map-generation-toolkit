@@ -1,4 +1,23 @@
+async function loadColors() {
+    const res = await fetch('/colors');
+    if (!res.ok) throw new Error('Colors load failed');
+    window.tileColors = await res.json();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadColors();
+    initGrid();
+    initButtons();
+    initPainting();
+});
+
 let brushSize = 3;
+
+const paintConfig = [
+    {id: 'paint-water', tileIndex: 0},
+    {id: 'paint-sand', tileIndex: 4},
+    {id: 'paint-forest', tileIndex: 7},
+];
 
 function initButtons() {
     document.getElementById('tools-btn').addEventListener('click', () => {
@@ -12,9 +31,14 @@ function initButtons() {
 
     document.getElementById('generate-btn').addEventListener('click', generateCanvas);
 
-    document.getElementById('paint-water').addEventListener('click', () => setPaintColor('#00507f'));
-    document.getElementById('paint-land').addEventListener('click', () => setPaintColor('#ffd675'));
-    document.getElementById('paint-forest').addEventListener('click', () => setPaintColor('#2c7519'));
+    paintConfig.forEach(({id, tileIndex}) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const color = window.tileColors[tileIndex];
+            setPaintColor(color);
+        });
+    });
 
     const brushSizeSlider = document.getElementById('brushSize-slider');
     const brushSizeValue = document.getElementById('brushSize-value');
@@ -52,11 +76,6 @@ function initButtons() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initGrid();
-    initButtons();
-    initPainting();
-});
 
 async function saveCanvas() {
     const canvas = document.getElementById('paint-canvas');
@@ -155,42 +174,16 @@ async function generateCanvas() {
             // Render the generated map on the canvas
             const canvas = document.getElementById('paint-canvas');
             const ctx = canvas.getContext('2d');
-            // const tileColors = data.colors;
+            const tileColors = data.colors;
 
             for (let y = 0; y < grid.length; y++) {
                 for (let x = 0; x < grid[y].length; x++) {
 
-                    let colorCode = grid[y][x];
+                    const colorCode = grid[y][x];
 
-                    switch (colorCode) {
-                        case 0:
-                            ctx.fillStyle = '#00507f';
-                            break;
-                        case 1:
-                            ctx.fillStyle = '#1085bc';
-                            break;
-                        case 2:
-                            ctx.fillStyle = '#3eb3e6';
-                            break;
-                        case 3:
-                            ctx.fillStyle = '#b59752';
-                            break;
-                        case 4:
-                            ctx.fillStyle = '#ffd675';
-                            break;
-                        case 5:
-                            ctx.fillStyle = '#78e85b';
-                            break;
-                        case 6:
-                            ctx.fillStyle = '#4caf32';
-                            break;
-                        case 7:
-                            ctx.fillStyle = '#2c7519';
-                            break;
-                        default:
-                            ctx.fillStyle = '#000000';
-                            break;
-                    }
+                    // Fallback
+                    ctx.fillStyle = tileColors[colorCode] || '#000000';
+
                     ctx.fillRect(x * TileSize, y * TileSize, TileSize, TileSize);
                 }
             }
