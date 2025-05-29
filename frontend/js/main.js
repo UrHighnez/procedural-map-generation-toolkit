@@ -13,11 +13,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 let brushSize = 3;
 
-const paintConfig = [
-    {id: 'paint-water', tileIndex: 0},
-    {id: 'paint-sand', tileIndex: 4},
-    {id: 'paint-forest', tileIndex: 7},
-];
+const paintConfig = [{id: 'paint-water', tileIndex: 0}, {id: 'paint-sand', tileIndex: 4}, {
+    id: 'paint-forest', tileIndex: 7
+},];
 
 function initButtons() {
     document.getElementById('tools-btn').addEventListener('click', () => {
@@ -84,9 +82,7 @@ async function saveCanvas() {
     // Send the image data to the backend
     try {
         const response = await fetch('/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({imageData}),
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({imageData}),
         });
 
         if (response.ok) {
@@ -144,19 +140,10 @@ async function generateCanvas() {
 
     try {
         const response = await fetch('/generate', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                width: cols,
-                height: rows,
-                prevGrid: grid,
-                paintedTiles: paintedTiles,
-                randomnessFactor: randomness,
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+                width: cols, height: rows, prevGrid: grid, paintedTiles: paintedTiles, randomnessFactor: randomness,
 
-                noiseScale: 0.5,
-                noiseOctaves: 4,
-                noisePersistence: 0.9,
-                noiseLacunarity: 1.8,
+                noiseScale: 0.5, noiseOctaves: 4, noisePersistence: 0.9, noiseLacunarity: 1.8,
 
                 iterations,
 
@@ -190,6 +177,10 @@ async function generateCanvas() {
 
             // ENTROPY
             document.getElementById('entropy').textContent = data.entropy.toFixed(2);
+
+            // FRACTAL DIMENSION
+            // data.fractalDim is a number
+            document.getElementById('fractalDim').textContent = data.fractalDim.toFixed(2);
 
             // CLUSTER
             const rawGrid = Array.isArray(data) ? data : data.grid;
@@ -255,26 +246,121 @@ async function generateCanvas() {
             document.getElementById('adjacency').innerHTML = adjStrings.join(' | ');
 
             // AUTOCORRELATION
-            // data.autocorr is an object { "0,0": 1.0, "1,0": 0.8, ... }
-            const autoEntries = Object.entries(data.autocorr).map(([lag, val]) => {
-                return `${lag}: ${val.toFixed(2)}`;
-            });
-            document.getElementById('autocorr').textContent = autoEntries.join(' | ');
+            // data.autocorr is an object { "dx,dy": value, ... }
+            const autocorrContainer = document.getElementById('autocorr');
+            autocorrContainer.innerHTML = ''; // Clear previous content
 
-            // FRACTAL DIMENSION
-            // data.fractalDim is a number
-            document.getElementById('fractalDim').textContent = data.fractalDim.toFixed(2);
+            const lags = Object.keys(data.autocorr);
 
-            // SPECTRAL SPECTRUM
-            // data.spectrum st a 2D array [[...], [...], …]
-            // Show the first N values, formated to a single decimal.
-            const N = Math.min(5, data.spectrum[0].length);  // e.g. the first 5 columns
-            const specLines = data.spectrum.map(row => {
-                return row.slice(0, N)
-                    .map(v => v.toFixed(1))
-                    .join(', ');
-            });
-            document.getElementById('spectrum').textContent = specLines.join('\n');
+            if (lags.length > 0) {
+                const lagCoords = lags.map(k => k.split(',').map(Number));
+                const all_dx = lagCoords.map(l => l[0]);
+                const all_dy = lagCoords.map(l => l[1]);
+                const min_dx = Math.min(...all_dx);
+                const max_dx = Math.max(...all_dx);
+                const min_dy = Math.min(...all_dy);
+                const max_dy = Math.max(...all_dy);
+
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.margin = 'auto'; // Center the table visually
+
+                for (let dy = min_dy; dy <= max_dy; dy++) {
+                    const row = document.createElement('tr');
+                    for (let dx = min_dx; dx <= max_dx; dx++) {
+                        const cell = document.createElement('td');
+                        const key = `${dx},${dy}`;
+                        const value = data.autocorr[key];
+
+                        // Basic cell styling
+                        cell.style.width = '1em';
+                        cell.style.height = '1em';
+                        cell.style.border = '1px solid #555';
+
+                        if (value !== undefined) {
+                            // Map the correlation value (typically [0, 1]) to a grayscale color.
+                            // A value of 1.0 will be white, 0.0 will be black.
+                            const intensity = Math.max(0, Math.min(1, value)); // Clamp value to [0, 1]
+                            const colorVal = Math.round(intensity * 255);
+                            cell.style.backgroundColor = `rgb(${colorVal}, ${colorVal}, ${colorVal})`;
+
+                            // Add a tooltip to show the precise value on hover
+                            cell.title = `Lag (${dx}, ${dy}): ${value.toFixed(3)}`;
+                        } else {
+                            // Style for lags that are not in the data, if any
+                            cell.style.backgroundColor = '#222';
+                        }
+
+                        // Highlight the center cell (lag 0,0) which is always 1.0
+                        if (dx === 0 && dy === 0) {
+                            cell.style.outline = '1px solid red';
+                            cell.style.outlineOffset = '-1px';
+                        }
+
+                        row.appendChild(cell);
+                    }
+                    table.appendChild(row);
+                }
+                autocorrContainer.appendChild(table);
+            }
+
+            // SPECTRAL ANALYSIS
+            // data.spectrum is a 2D array [[...], [...], ...]
+            const spectrumContainer = document.getElementById('spectrum');
+            spectrumContainer.innerHTML = ''; // Clear previous content
+            // Remove default line-height to make the grid compact
+            spectrumContainer.style.lineHeight = '0';
+
+            const spectrum = data.spectrum;
+
+            if (spectrum && spectrum.length > 0 && spectrum[0].length > 0) {
+                // Spectrums often have a huge dynamic range. A log scale is best for visualization.
+                // First, find the maximum log-transformed value for normalization.
+                let maxLogVal = 0;
+                for (let y = 0; y < spectrum.length; y++) {
+                    for (let x = 0; x < spectrum[y].length; x++) {
+                        // Use log(1 + value) to avoid issues with log(0)
+                        const logVal = Math.log(1 + spectrum[y][x]);
+                        if (logVal > maxLogVal) {
+                            maxLogVal = logVal;
+                        }
+                    }
+                }
+
+                const table = document.createElement('table');
+                table.style.borderCollapse = 'collapse';
+                table.style.margin = 'auto';
+
+                // Build the table row by row
+                for (let y = 0; y < spectrum.length; y++) {
+                    const row = document.createElement('tr');
+                    for (let x = 0; x < spectrum[y].length; x++) {
+                        const cell = document.createElement('td');
+                        const value = spectrum[y][x];
+
+                        // Normalize the log-transformed value to get an intensity from 0 to 1
+                        const logVal = Math.log(1 + value);
+                        const intensity = maxLogVal > 0 ? (logVal / maxLogVal) : 0;
+
+                        // Map intensity to a grayscale color (0=black, 1=white)
+                        const colorVal = Math.round(intensity * 255);
+                        cell.style.backgroundColor = `rgb(${colorVal}, ${colorVal}, ${colorVal})`;
+
+                        // Style cells to be small, square, and without padding for a clean look
+                        const cellSize = Math.max(1, Math.floor(128 / Math.max(spectrum.length, spectrum[0].length)));
+                        cell.style.width = `${cellSize}px`;
+                        cell.style.height = `${cellSize}px`;
+                        cell.style.padding = '0';
+
+                        // Add a tooltip to show the original value in scientific notation
+                        cell.title = `Freq (${x}, ${y}): ${value.toExponential(2)}`;
+
+                        row.appendChild(cell);
+                    }
+                    table.appendChild(row);
+                }
+                spectrumContainer.appendChild(table);
+            }
 
         }
 
@@ -358,10 +444,7 @@ function getClusters(grid) {
                 size++;
                 [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
                     const nx = cx + dx, ny = cy + dy;
-                    if (
-                        nx >= 0 && nx < cols && ny >= 0 && ny < rows &&
-                        !seen[ny][nx] && grid[ny][nx] === type
-                    ) {
+                    if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !seen[ny][nx] && grid[ny][nx] === type) {
                         seen[ny][nx] = true;
                         stack.push([nx, ny]);
                     }
