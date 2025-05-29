@@ -179,71 +179,220 @@ async function generateCanvas() {
             document.getElementById('entropy').textContent = data.entropy.toFixed(2);
 
             // FRACTAL DIMENSION
-            // data.fractalDim is a number
             document.getElementById('fractalDim').textContent = data.fractalDim.toFixed(2);
 
             // CLUSTER
+            const clustersContainer = document.getElementById('clusters');
+            clustersContainer.innerHTML = ''; // Clear previous content
+
             const rawGrid = Array.isArray(data) ? data : data.grid;
+            // The getClusters function is already in your main.js file
             const clusters = getClusters(rawGrid);
-            const clusterStrings = clusters.map(({tileType, size}) => {
-                const color = data.colors[tileType] || '#cccccc';
-                return `
-                    <span style="
-                        display:inline-block;
-                        width:0.5em; height:0.5em;
-                        vertical-align:middle;
-                        background-color:${color};
-                    "></span>
-                    ${size}
-                `;
+
+            // Step 1: Process the raw cluster list into a summary object.
+            // We'll group by tileType and calculate count, totalSize, and maxSize.
+            const summarizedClusters = {};
+            clusters.forEach(({tileType, size}) => {
+                if (!summarizedClusters[tileType]) {
+                    summarizedClusters[tileType] = {
+                        count: 0,
+                        totalSize: 0,
+                        maxSize: 0,
+                    };
+                }
+                summarizedClusters[tileType].count++;
+                summarizedClusters[tileType].totalSize += size;
+                if (size > summarizedClusters[tileType].maxSize) {
+                    summarizedClusters[tileType].maxSize = size;
+                }
             });
-            document.getElementById('clusters').innerHTML = clusterStrings.join(' | ');
+
+            // Step 2: Build the HTML display from the summarized data.
+            // We'll use CSS Grid again for a clean, multi-column layout.
+            clustersContainer.style.display = 'grid';
+            clustersContainer.style.gridTemplateColumns = 'auto auto 1fr'; // Icon | Count | Details
+            clustersContainer.style.gap = '4px 8px';
+            clustersContainer.style.alignItems = 'center';
+
+            // Sort by tile index for a consistent display order.
+            const sortedClusterEntries = Object.entries(summarizedClusters).sort(([a], [b]) => +a - +b);
+
+            sortedClusterEntries.forEach(([tileType, summary]) => {
+                const idx = +tileType;
+                const color = data.colors[idx] || '#cccccc';
+                const avgSize = (summary.totalSize / summary.count).toFixed(1);
+
+                // Column 1: The color swatch for the tile type
+                const icon = document.createElement('div');
+                icon.innerHTML = `
+                    <span style="
+                        display: inline-block;
+                        width: 0.8em;
+                        height: 0.8em;
+                        vertical-align: middle;
+                        background-color: ${color};
+                        border: 1px solid #333;
+                    "></span>
+                `;
+
+                // Column 2: The number of clusters found (e.g., "3x")
+                const countSpan = document.createElement('span');
+                countSpan.style.textAlign = 'right';
+                countSpan.style.fontWeight = 'bold';
+                countSpan.textContent = `${summary.count}x`;
+
+                // Column 3: Details about the max and average size
+                const detailsSpan = document.createElement('span');
+                detailsSpan.style.fontSize = '0.9em';
+                detailsSpan.style.color = '#444';
+                detailsSpan.textContent = `(Max: ${summary.maxSize}, Avg: ${avgSize})`;
+
+                // Add all columns to the grid container
+                clustersContainer.appendChild(icon);
+                clustersContainer.appendChild(countSpan);
+                clustersContainer.appendChild(detailsSpan);
+            });
 
 
             // FREQUENCY
-            const freqStrings = Object.entries(data.frequencies).map(([tileIdx, p]) => {
+            const frequenciesContainer = document.getElementById('frequencies');
+            frequenciesContainer.innerHTML = ''; // Clear previous content
+
+            // Use CSS Grid for a clean, aligned layout of labels and bars.
+            frequenciesContainer.style.display = 'grid';
+            frequenciesContainer.style.gridTemplateColumns = 'auto 1fr'; // Col 1 for labels, Col 2 for bars
+            frequenciesContainer.style.gap = '4px 8px'; // Add some space between rows and columns
+            frequenciesContainer.style.alignItems = 'center';
+
+            // Sort by tile index to ensure the order is always the same.
+            const sortedFrequencies = Object.entries(data.frequencies).sort(([a], [b]) => +a - +b);
+
+            sortedFrequencies.forEach(([tileIdx, p]) => {
+                // Don't display a bar for tile types with zero frequency.
+                if (p <= 0) {
+                    return;
+                }
+
                 const idx = +tileIdx;
                 const color = data.colors[idx] || '#cccccc';
                 const percent = (p * 100).toFixed(1);
-                return `
+
+                // --- Create the Label (Color Swatch + Percentage Text) ---
+                const label = document.createElement('div');
+                label.style.whiteSpace = 'nowrap'; // Prevent text from wrapping
+                label.style.textAlign = 'right';
+                label.innerHTML = `
                     <span style="
-                        display:inline-block;
-                        width:0.5em; height:0.5em;
-                        vertical-align:middle;
-                        background-color:${color};
+                        display: inline-block;
+                        width: 0.8em;
+                        height: 0.8em;
+                        vertical-align: middle;
+                        background-color: ${color};
+                        border: 1px solid #333;
                     "></span>
-                    ${idx}: ${percent}%
+                    <span style="font-size: 0.9em; vertical-align: middle;">
+                        ${percent}%
+                    </span>
                 `;
+
+                // --- Create the Bar ---
+                // 1. A container div that acts as the background "track" for the bar.
+                const barContainer = document.createElement('div');
+                barContainer.style.width = '100%';
+                barContainer.style.backgroundColor = '#e0e0e0';
+                barContainer.style.borderRadius = '3px';
+                barContainer.style.height = '1.2em';
+
+                // 2. The actual colored bar, with its width set by the frequency.
+                const bar = document.createElement('div');
+                bar.style.width = `${p * 100}%`;
+                bar.style.height = '100%';
+                bar.style.backgroundColor = color;
+                bar.style.borderRadius = '3px';
+                // Add a nice transition for when the values change.
+                bar.style.transition = 'width 0.4s ease-in-out';
+
+                barContainer.appendChild(bar);
+
+                // Add the new elements to the grid container
+                frequenciesContainer.appendChild(label);
+                frequenciesContainer.appendChild(barContainer);
             });
-            document.getElementById('frequencies').innerHTML = freqStrings.join(' | ');
 
 
             // ADJACENCY
-            const adjStrings = [];
-            const C = data.colors.length;
-            for (let i = 0; i < C; i++) {
-                for (let j = 0; j < C; j++) {
-                    const count = (data.adjacency[i] || [])[j] || 0;
-                    if (!count) continue;
-                    const ci = data.colors[i] || '#cccccc';
-                    const cj = data.colors[j] || '#cccccc';
-                    adjStrings.push(`
-                        <span style="
-                            display:inline-block;
-                            width:0.5em; height:0.5em;
-                            background-color:${ci};
-                        "></span>
-                        →
-                        <span style="
-                            display:inline-block;
-                            width:0.5em; height:0.5em;
-                            background-color:${cj};
-                        "></span>
-                        ${count}
-                    `);
+            const adjacencyContainer = document.getElementById('adjacency');
+            adjacencyContainer.innerHTML = ''; // Clear previous content
+
+            const adjacencyData = data.adjacency;
+            const colors = data.colors;
+            const numTypes = colors.length;
+
+            // Step 1: Find the maximum count to normalize for the heatmap color.
+            let maxCount = 0;
+            for (let i = 0; i < numTypes; i++) {
+                for (let j = 0; j < numTypes; j++) {
+                    const count = (adjacencyData[i] || [])[j] || 0;
+                    if (count > maxCount) {
+                        maxCount = count;
+                    }
                 }
             }
-            document.getElementById('adjacency').innerHTML = adjStrings.join(' | ');
+
+            // Step 2: Create the table structure.
+            const table = document.createElement('table');
+            table.style.borderCollapse = 'collapse';
+            table.style.fontSize = '0.9em';
+            table.style.margin = 'auto';
+
+            // Step 3: Create the top header row with tile icons as column labels.
+            const headerRow = document.createElement('tr');
+            headerRow.appendChild(document.createElement('th')); // Empty top-left corner
+            for (let j = 0; j < numTypes; j++) {
+                const th = document.createElement('th');
+                th.style.padding = '2px';
+                th.innerHTML = `<div title="${j}" style="width: 1.2em; height: 1.2em; background-color: ${colors[j]}; border: 1px solid #555;"></div>`;
+                headerRow.appendChild(th);
+            }
+            table.appendChild(headerRow);
+
+            // Step 4: Create a data row for each tile type.
+            for (let i = 0; i < numTypes; i++) {
+                const row = document.createElement('tr');
+
+                // First cell in the row is the tile icon header.
+                const th = document.createElement('th');
+                th.style.padding = '2px';
+                th.innerHTML = `<div title="${i}" style="width: 1.2em; height: 1.2em; background-color: ${colors[i]}; border: 1px solid #555;"></div>`;
+                row.appendChild(th);
+
+                // Create the data cells for the row.
+                for (let j = 0; j < numTypes; j++) {
+                    const td = document.createElement('td');
+                    const count = (adjacencyData[i] || [])[j] || 0;
+
+                    td.textContent = count;
+                    td.style.padding = '5px';
+                    td.style.textAlign = 'center';
+                    td.style.border = '1px solid #ddd';
+                    td.title = `${count} pairs of type ${i} adjacent to type ${j}`;
+
+                    // Apply heatmap color. Using sqrt helps visualize variance better.
+                    if (maxCount > 0) {
+                        const intensity = Math.sqrt(count / maxCount);
+                        // Using a blue color scale: transparent for 0, dark blue for maxCount.
+                        td.style.backgroundColor = `rgba(0, 80, 200, ${intensity})`;
+                        // Make text white on darker backgrounds for better readability.
+                        if (intensity > 0.6) {
+                            td.style.color = 'white';
+                        }
+                    }
+                    row.appendChild(td);
+                }
+                table.appendChild(row);
+            }
+
+            adjacencyContainer.appendChild(table);
 
             // AUTOCORRELATION
             // data.autocorr is an object { "dx,dy": value, ... }
