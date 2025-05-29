@@ -17,13 +17,32 @@
 
 <div id="metrics-panel">
     <h3>Metrics</h3>
-    <p><b>Entropy: </b><br><span id="entropy">–</span></p>
-    <p><b>Fractal Dimension: </b><br><span id="fractalDim">–</span></p>
-    <p><b>Adjacency: </b><br><span id="adjacency">–</span></p>
-    <p><b>Cluster Sizes: </b><br><span id="clusters">–</span></p>
-    <p><b>Tile Frequencies: </b><br><span id="frequencies">–</span></p>
-    <p><b>Autocorrelation: </b><br><span id="autocorr">–</span></p>
-    <p><b>Spectral analysis: </b><br><span id="spectrum">–</span></p>
+    <div class="metrics-grid-container">
+        <div class="metric-item">
+            <p><b>Entropy:</b><br><span id="entropy">–</span></p>
+        </div>
+        <div class="metric-item">
+            <p><b>Fractal Dimension:</b><br><span id="fractalDim">–</span></p>
+        </div>
+
+        <div class="metric-item">
+            <p><b>Adjacency:</b><br><span id="adjacency" class="metric-display-box">–</span></p>
+        </div>
+        <div class="metric-item">
+            <p><b>Cluster Sizes:</b><br><span id="clusters" class="metric-display-box">–</span></p>
+        </div>
+        <div class="metric-item">
+            <p><b>Tile Frequencies:</b><br><span id="frequencies" class="metric-display-box">–</span></p>
+        </div>
+
+        <div class="metric-item-spacer"></div>
+        <div class="metric-item">
+            <p><b>Autocorrelation:</b><br><span id="autocorr" class="metric-display-box">–</span></p>
+        </div>
+        <div class="metric-item">
+            <p><b>Spectral analysis:</b><br><span id="spectrum" class="metric-display-box">–</span></p>
+        </div>
+    </div>
 </div>
 
 <div id="tools-panel" class="hidden">

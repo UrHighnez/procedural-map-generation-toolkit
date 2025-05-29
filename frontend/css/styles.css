@@ -89,41 +89,37 @@ body {
     display: flex;
 }
 
-/* Style each row within the tools panel */
 #tools-panel > div {
     display: flex;
-    justify-content: space-between; /* Pushes label left, control right */
-    align-items: center; /* Vertically aligns items in the row */
-    padding: 5px 0; /* Add some vertical spacing for each row */
-    border-bottom: 1px solid #eee; /* Optional: separator lines */
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
 }
 
 #tools-panel > div:last-child {
     border-bottom: none;
 }
 
-/* Style labels within each row */
 #tools-panel > div > label {
-    margin-right: 10px; /* Space between label and its control */
-    flex-shrink: 0; /* Prevent labels from shrinking if space is tight */
+    margin-right: 10px;
+    flex-shrink: 0;
     white-space: nowrap;
 }
 
-/* Style controls (inputs, selects, spans containing buttons) within each row */
 #tools-panel > div > input[type="range"],
 #tools-panel > div > select,
 #tools-panel > div > span#paint-color-value {
-    flex-grow: 1; /* Allow controls to take up available space */
+    flex-grow: 1;
 }
 
-/* Specifically for the paint color buttons container, make them align nicely too */
 #tools-panel > div > span#paint-color-value {
     display: flex;
-    justify-content: flex-start; /* Align buttons to the start, or flex-end if you prefer them right-aligned */
+    justify-content: flex-start;
 }
 
 #tools-panel > div > span#paint-color-value button {
-    margin-left: 5px; /* Space between paint buttons */
+    margin-left: 5px;
 }
 
 #tools-panel > div > span#paint-color-value button:first-child {
@@ -132,4 +128,57 @@ body {
 
 .hidden {
     display: none;
+}
+
+#metrics-panel {
+    position: absolute;
+    top: 530px;
+    left: 10px;
+    width: 480px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+#metrics-panel h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metrics-grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.metric-item {
+    padding: 8px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-item p {
+    margin: 0 0 5px 0;
+    font-size: 0.9em;
+}
+
+.metric-item p b {
+    font-size: 1.05em;
+}
+
+.metric-item span {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.metric-display-box {
+    min-height: 60px;
+    padding: 5px;
+    border-top: 1px dashed #ddd;
+    margin-top: 5px;
+    overflow-x: auto;
 }
