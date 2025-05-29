@@ -1,8 +1,7 @@
-const GridSize = 500;
-const TileSize = 20;
+export const GridSize = 500;
+export const TileSize = 20;
 
-
-function initGrid() {
+export function initGrid() {
 
     const gridCanvas = document.getElementById('grid-canvas');
     gridCanvas.width = GridSize;

@@ -1,3 +1,5 @@
+import {TileSize} from "./grid.js";
+
 let paintColor = null;
 
 window.setPaintColor = function (color) {
@@ -41,16 +43,10 @@ function initPainting() {
         ctx.fillStyle = paintColor;
         for (let y = 0; y < brushSize; y++) {
             for (let x = 0; x < brushSize; x++) {
-                ctx.fillRect(
-                    (centerCellX + x - halfBrush) * TileSize,
-                    (centerCellY + y - halfBrush) * TileSize,
-                    TileSize,
-                    TileSize
-                );
+                ctx.fillRect((centerCellX + x - halfBrush) * TileSize, (centerCellY + y - halfBrush) * TileSize, TileSize, TileSize);
             }
         }
     }
-
 }
 
 document.addEventListener('DOMContentLoaded', initPainting);

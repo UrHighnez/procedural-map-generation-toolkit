@@ -72,21 +72,62 @@ body {
 #tools-panel {
     background-color: rgba(241, 241, 241, 0.85);
     border: 1px solid #d3d3d3;
-    padding: 5px;
+    padding: 10px;
     position: absolute;
     top: 540px;
     left: 10px;
     z-index: 2;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: space-evenly;
-    max-height: 250px;
-    height: 100%;
+    max-height: 300px;
+    height: auto;
     overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
 #tools-panel.tools-panel-visible {
     display: flex;
+}
+
+/* Style each row within the tools panel */
+#tools-panel > div {
+    display: flex;
+    justify-content: space-between; /* Pushes label left, control right */
+    align-items: center; /* Vertically aligns items in the row */
+    padding: 5px 0; /* Add some vertical spacing for each row */
+    border-bottom: 1px solid #eee; /* Optional: separator lines */
+}
+
+#tools-panel > div:last-child {
+    border-bottom: none;
+}
+
+/* Style labels within each row */
+#tools-panel > div > label {
+    margin-right: 10px; /* Space between label and its control */
+    flex-shrink: 0; /* Prevent labels from shrinking if space is tight */
+    white-space: nowrap;
+}
+
+/* Style controls (inputs, selects, spans containing buttons) within each row */
+#tools-panel > div > input[type="range"],
+#tools-panel > div > select,
+#tools-panel > div > span#paint-color-value {
+    flex-grow: 1; /* Allow controls to take up available space */
+}
+
+/* Specifically for the paint color buttons container, make them align nicely too */
+#tools-panel > div > span#paint-color-value {
+    display: flex;
+    justify-content: flex-start; /* Align buttons to the start, or flex-end if you prefer them right-aligned */
+}
+
+#tools-panel > div > span#paint-color-value button {
+    margin-left: 5px; /* Space between paint buttons */
+}
+
+#tools-panel > div > span#paint-color-value button:first-child {
+    margin-left: 0;
 }
 
 .hidden {
