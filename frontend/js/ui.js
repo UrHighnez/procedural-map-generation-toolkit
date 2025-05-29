@@ -13,7 +13,7 @@ function visualizeFractalDimension(data) {
 function visualizeFrequencies(data) {
     const container = document.getElementById('frequencies');
     container.innerHTML = '';
-// Use CSS Grid for a clean, aligned layout of labels and bars.
+    // Use CSS Grid for a clean, aligned layout of labels and bars.
     container.style.display = 'grid';
     container.style.gridTemplateColumns = 'auto 1fr'; // Col 1 for labels, Col 2 for bars
     container.style.gap = '4px 8px'; // Add some space between rows and columns
@@ -81,7 +81,7 @@ function visualizeClusters(data) {
     const clusters = getClusters(data.grid);
 
     // Step 1: Process the raw cluster list into a summary object.
-    // We'll group by tileType and calculate count, totalSize, and maxSize.
+    // Group by tileType and calculate count, totalSize, and maxSize.
     const summarizedClusters = {};
     clusters.forEach(({tileType, size}) => {
         if (!summarizedClusters[tileType]) {
@@ -97,7 +97,7 @@ function visualizeClusters(data) {
     });
 
     // Step 2: Build the HTML display from the summarized data.
-    // We'll use CSS Grid again for a clean, multi-column layout.
+    // Use CSS Grid again for a clean, multi-column layout.
     container.style.display = 'grid';
     container.style.gridTemplateColumns = 'auto auto 1fr'; // Icon | Count | Details
     container.style.gap = '4px 8px';
@@ -182,7 +182,7 @@ function visualizeAdjacency(data) {
     for (let i = 0; i < numTypes; i++) {
         const row = document.createElement('tr');
 
-        // First cell in the row is the tile icon header.
+        // The first cell in the row is the tile icon header.
         const th = document.createElement('th');
         th.style.padding = '2px';
         th.innerHTML = `<div title="${i}" style="width: 1.2em; height: 1.2em; background-color: ${colors[i]}; border: 1px solid #555;"></div>`;
@@ -278,7 +278,7 @@ function visualizeAutocorrelation(data) {
 function visualizeSpectrum(data) {
     const container = document.getElementById('spectrum');
     container.innerHTML = '';
-// Remove default line-height to make the grid compact
+    // Remove default line-height to make the grid compact
     container.style.lineHeight = '0';
 
     const spectrum = data.spectrum;
@@ -368,7 +368,7 @@ export function initControls(callbacks) {
     paintConfig.forEach(({id, tileIndex}) => {
         document.getElementById(id).addEventListener('click', () => {
             const color = window.tileColors[tileIndex];
-            window.setPaintColor(color); // Assumes setPaintColor is global from paint.js
+            window.setPaintColor(color);
         });
     });
 

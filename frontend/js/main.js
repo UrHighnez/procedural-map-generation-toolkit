@@ -3,6 +3,7 @@ import * as ui from './ui.js';
 import {updateMetricsPanel} from './ui.js';
 import {getPaintedTiles, renderGrid} from './canvas.js';
 import {initGrid} from './grid.js';
+import {TileSize} from './grid.js';
 
 // --- Main Application State ---
 const state = {
@@ -14,30 +15,29 @@ const state = {
 async function handleGenerate() {
     try {
         const paintCanvas = document.getElementById('paint-canvas');
-        const TileSize = 20; // Assuming TileSize is a known constant
 
         const params = {
             width: Math.ceil(paintCanvas.width / TileSize),
             height: Math.ceil(paintCanvas.height / TileSize),
-            paintedTiles: getPaintedTiles(paintCanvas), // Assuming getPaintedTiles is imported or local
+            paintedTiles: getPaintedTiles(paintCanvas),
             generationMethod: document.getElementById('generation-method').value,
 
-            // Read slider values directly here
+            // Read slider values
             iterations: Number(document.getElementById('iteration-slider').value),
             randomnessFactor: parseFloat(document.getElementById('randomness-slider').value),
 
-            // Example noise params (you might want to hook these up to sliders too)
+            // Example noise params
             noiseScale: 0.5,
             noiseOctaves: 4,
             noisePersistence: 0.9,
             noiseLacunarity: 1.8,
         };
 
-        const data = await api.generate(params); // Assuming api is imported
+        const data = await api.generate(params);
         console.log('Server response: ', data);
 
-        renderGrid(paintCanvas, data.grid, data.colors); // Assuming renderGrid is imported
-        updateMetricsPanel(data); // Assuming updateMetricsPanel is imported
+        renderGrid(paintCanvas, data.grid, data.colors);
+        updateMetricsPanel(data);
 
     } catch (error) {
         console.error(error);
