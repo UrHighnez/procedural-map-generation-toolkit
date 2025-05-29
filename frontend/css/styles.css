@@ -132,7 +132,7 @@ body {
 
 #metrics-panel {
     position: absolute;
-    top: 530px;
+    top: 550px;
     left: 10px;
     width: 480px;
     border: 1px solid #ccc;
@@ -180,5 +180,13 @@ body {
     padding: 5px;
     border-top: 1px dashed #ddd;
     margin-top: 5px;
+    overflow-x: auto;
+}
+
+#adjacency table td {
+    white-space: nowrap;
+}
+
+#adjacency {
     overflow-x: auto;
 }
