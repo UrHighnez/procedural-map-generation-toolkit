@@ -2,8 +2,8 @@ import * as api from './api.js';
 import * as ui from './ui.js';
 import {updateMetricsPanel} from './ui.js';
 import {getPaintedTiles, renderGrid} from './canvas.js';
-import {initGrid} from './grid.js';
-import {TileSize} from './grid.js';
+import {initGrid, TileSize} from './grid.js';
+import {initExportButtons} from './export.js';
 
 // --- Main Application State ---
 const state = {
@@ -40,7 +40,7 @@ async function handleGenerate() {
         updateMetricsPanel(data);
 
     } catch (error) {
-        console.error(error);
+        console.error('Error in handleGenerate: ', error);
         alert(error.message);
     }
 }
@@ -49,7 +49,7 @@ async function handleSave() {
     try {
         await api.saveCanvas(state.paintCanvas);
     } catch (error) {
-        console.error(error);
+        console.error('Error in handleSave: ', error);
         alert(error.message);
     }
 }
@@ -58,7 +58,7 @@ async function handleLoad() {
     try {
         await api.loadCanvasTo(state.paintCanvas);
     } catch (error) {
-        console.error(error);
+        console.error('Error in handleLoad: ', error);
         alert(error.message);
     }
 }
@@ -77,10 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Connect UI controls to handlers
         ui.initControls({
-            onGenerate: handleGenerate,
-            onSave: handleSave,
-            onLoad: handleLoad,
+            onGenerate: handleGenerate, onSave: handleSave, onLoad: handleLoad,
         });
+
+        initExportButtons();
 
     } catch (error) {
         console.error("Initialization failed:", error);
