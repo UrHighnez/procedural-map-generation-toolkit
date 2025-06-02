@@ -49,10 +49,9 @@ func NewGrid(w, h int) *Grid {
 }
 
 // Solve runs the WFC algorithm with a simple restart-on-conflict strategy.
-func (g *Grid) Solve(maxRetries int) ([][]tiles.TileType, error) {
+func (g *Grid) Solve(maxRetries int, seed int64) ([][]tiles.TileType, error) {
 
-	const fixedSeed = 7
-	rng := rand.New(rand.NewSource(fixedSeed))
+	rng := rand.New(rand.NewSource(seed))
 
 	// Define water types
 	waterSet := map[tiles.TileType]struct{}{tiles.DeepWater: {}, tiles.Water: {}, tiles.CoastalWater: {}}

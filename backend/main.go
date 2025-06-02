@@ -24,6 +24,7 @@ import (
 )
 
 const fixedSeed = 1
+const defaultWFCSeed = 1
 
 func main() {
 	e := echo.New()
@@ -108,6 +109,7 @@ type GenerateRequest struct {
 	NoiseOctaves     int     `json:"noiseOctaves"`
 	NoisePersistence float64 `json:"noisePersistence"`
 	NoiseLacunarity  float64 `json:"noiseLacunarity"`
+	WFCSeed          *int64  `json:"wfcSeed,omitempty"`
 }
 
 type GenerateResponse struct {
@@ -177,20 +179,26 @@ func generateTiles(c echo.Context) error {
 }
 
 func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
-	// Convert painted
-	painted := make([][]tiles.TileType, len(req.PaintedTiles))
-	for y := range req.PaintedTiles {
-		painted[y] = make([]tiles.TileType, len(req.PaintedTiles[y]))
-		for x, v := range req.PaintedTiles[y] {
-			painted[y][x] = tiles.TileType(v)
+	// Convert painted, ensuring correct dimensions for mlca.GenerateTiles
+	painted := make([][]tiles.TileType, req.Height)
+	for y := 0; y < req.Height; y++ {
+		painted[y] = make([]tiles.TileType, req.Width)
+		for x := 0; x < req.Width; x++ {
+			// Default to -1 (not painted)
+			painted[y][x] = -1
+			if y < len(req.PaintedTiles) && x < len(req.PaintedTiles[y]) {
+				if req.PaintedTiles[y][x] != -1 {
+					painted[y][x] = tiles.TileType(req.PaintedTiles[y][x])
+				}
+			}
 		}
 	}
+
 	// Generate
 	tileGrid, err := mlca.GenerateTiles(req.Width, req.Height, painted, req.Iterations, req.RandomnessFactor, mlca.CreateDefaultRules(), rand.New(rand.NewSource(fixedSeed)))
 	if err != nil {
 		return nil, 0, nil, nil, nil, 0, nil, err
 	}
-	// to ints
 	intGrid := make([][]int, len(tileGrid))
 	for y := range tileGrid {
 		intGrid[y] = make([]int, len(tileGrid[y]))
@@ -198,7 +206,7 @@ func runMLCA(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[i
 			intGrid[y][x] = int(tileGrid[y][x].Color)
 		}
 	}
-	// metrics
+	// Metrics
 	ent := metrics.TileEntropy(intGrid)
 	adj := metrics.AdjacencyMatrix(intGrid)
 	freq := metrics.TileFrequencies(intGrid)
@@ -231,10 +239,18 @@ func runNoise(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[
 
 func runWFC(req *GenerateRequest) ([][]int, float64, map[int]map[int]int, map[int]float64, map[[2]int]float64, float64, [][]float64, error) {
 	gridObj := wfc.NewGrid(req.Width, req.Height)
-	tilesOut, err := gridObj.Solve(100)
+
+	currentWFCSeed := int64(defaultWFCSeed)
+	if req.WFCSeed != nil {
+		currentWFCSeed = *req.WFCSeed
+	}
+
+	tilesOut, err := gridObj.Solve(100, currentWFCSeed)
+
 	if err != nil {
 		return nil, 0, nil, nil, nil, 0, nil, err
 	}
+
 	intGrid := make([][]int, len(tilesOut))
 	for y := range tilesOut {
 		intGrid[y] = make([]int, len(tilesOut[y]))
