@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 )
 
@@ -21,8 +20,7 @@ const (
 	defaultHeight = 25
 )
 
-// GenerateRequest matches the structure expected by your backend,
-// with an added WFCSeed for programmatic variation.
+// GenerateRequest matches the structure expected by the backend
 type GenerateRequest struct {
 	GenerationMethod string  `json:"generationMethod"`
 	Width            int     `json:"width"`
@@ -37,19 +35,19 @@ type GenerateRequest struct {
 	WFCSeed          *int64  `json:"wfcSeed,omitempty"` // Pointer to allow omission
 }
 
-// GenerateResponse matches the structure returned by your backend.
+// GenerateResponse matches the structure returned by the backend
 type GenerateResponse struct {
 	Grid        [][]int                   `json:"grid"`
-	Colors      []string                  `json:"colors"` // Assuming this is [tiles.NumTileTypes]string
+	Colors      []string                  `json:"colors"`
 	Entropy     float64                   `json:"entropy"`
-	Adjacency   map[string]map[string]int `json:"adjacency"`   // Adjusted for string keys from map[int]map[int]int
-	Frequencies map[string]float64        `json:"frequencies"` // Adjusted for string keys from map[int]float64
+	Adjacency   map[string]map[string]int `json:"adjacency"`
+	Frequencies map[string]float64        `json:"frequencies"`
 	Autocorr    map[string]float64        `json:"autocorr"`
 	FractalDim  float64                   `json:"fractalDim"`
 	Spectrum    [][]float64               `json:"spectrum"`
 }
 
-// ResultData is what we'll save for each generated map.
+// ResultData is saved for each map
 type ResultData struct {
 	RequestParams    GenerateRequest  `json:"requestParams"`
 	ResponseMetrics  GenerateResponse `json:"responseMetrics"`
@@ -99,9 +97,9 @@ func main() {
 			}
 		case "noise":
 			// 10 noiseScale values * 10 noiseOctaves values = 100 maps
-			octaveSteps := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} // Or a more sensible range like 1-6
+			octaveSteps := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-			// Default values from your thesis/code
+			// Default values
 			defaultPersistence := 0.9
 			defaultLacunarity := 1.8
 
@@ -195,11 +193,6 @@ func generateAndSave(params GenerateRequest, outputPath string) {
 		return
 	}
 
-	// The backend's Adjacency and Frequencies maps might use int keys.
-	// The GenerateResponse struct here is defined with string keys for JSON compatibility
-	// if the backend marshals int-keyed maps directly (which json.Marshal does by converting int keys to strings).
-	// If your backend explicitly formats them differently, you might need to adjust GenerateResponse struct.
-
 	result := ResultData{
 		RequestParams:    params,
 		ResponseMetrics:  genResponse,
@@ -218,31 +211,4 @@ func generateAndSave(params GenerateRequest, outputPath string) {
 	}
 	log.Printf("Successfully generated and saved: %s (Time: %dms)", outputPath, generationTimeMs)
 	time.Sleep(100 * time.Millisecond) // Brief pause to avoid overwhelming the server
-}
-
-// Helper to convert map[int]map[int]int to map[string]map[string]int
-// and map[int]float64 to map[string]float64 for JSON if needed.
-// However, Go's json.Marshal handles map[int]... keys by converting int to string automatically.
-// So, the GenerateResponse struct with map[string]... should work if the backend sends standard JSON.
-
-// Example for Adjacency if manual conversion were needed before marshalling (not used in current script):
-func convertAdjacency(adjInt map[int]map[int]int) map[string]map[string]int {
-	adjStr := make(map[string]map[string]int)
-	for k1, v1 := range adjInt {
-		innerMapStr := make(map[string]int)
-		for k2, v2 := range v1 {
-			innerMapStr[strconv.Itoa(k2)] = v2
-		}
-		adjStr[strconv.Itoa(k1)] = innerMapStr
-	}
-	return adjStr
-}
-
-// Example for Frequencies if manual conversion were needed (not used in current script):
-func convertFrequencies(freqInt map[int]float64) map[string]float64 {
-	freqStr := make(map[string]float64)
-	for k, v := range freqInt {
-		freqStr[strconv.Itoa(k)] = v
-	}
-	return freqStr
 }
